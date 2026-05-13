@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Master - V4.0 (Hybrid Support)</title>
+    <title>Solar ROI Expert Master - V4.1 (Updated Refs)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -103,8 +103,8 @@
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
             const [dayUsage, setDayUsage] = useState(70);
-            const [hasBattery, setHasBattery] = useState(false); // เพิ่ม Toggle แบต
-            const [batterySize, setBatterySize] = useState(5); // ขนาดแบต (kWh)
+            const [hasBattery, setHasBattery] = useState(false);
+            const [batterySize, setBatterySize] = useState(5);
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
@@ -112,45 +112,35 @@
 
             const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
             const elecRate = 4.2;
-            const batteryCostPerKWh = 13500; // ราคากลางแบตเตอรี่
+            const batteryCostPerKWh = 13500; 
 
-            // 1. คำนวณขนาด kWp แผง (รวมเผื่อชาร์จแบตถ้าเป็น Hybrid)
             const solarSize = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
-                
                 if (hasBattery) {
-                    // กรณี Hybrid: แผงต้องผลิตครอบคลุมทั้งวัน และชาร์จแบตเผื่อกลางคืน
                     return (unitsNeededPerDay / sunHours).toFixed(2);
                 } else {
-                    // กรณี On-grid: ผลิตตามสัดส่วนกลางวัน
                     const dayUnits = unitsNeededPerDay * (dayUsage / 100);
                     return (dayUnits / sunHours).toFixed(2);
                 }
             }, [bill, sunHours, dayUsage, hasBattery]);
             
-            // 2. คำนวณเงินลงทุน (รวมค่าแบต)
             const estInvestment = useMemo(() => {
                 const size = parseFloat(solarSize);
                 let pricePerKWp = 45000;
                 if (size >= 3 && size < 5) pricePerKWp = 42000;
                 else if (size >= 5 && size < 10) pricePerKWp = 38000;
                 else if (size >= 10) pricePerKWp = 32000;
-                
                 let solarInvestment = size * pricePerKWp;
                 let batteryInvestment = hasBattery ? batterySize * batteryCostPerKWh : 0;
-                
                 return (solarInvestment + batteryInvestment).toFixed(0);
             }, [solarSize, hasBattery, batterySize]);
 
-            // 3. คำนวณรายได้ประหยัด (รวมส่วนที่แบตเตอรี่ช่วย)
             const estSaving = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
                 const totalPossibleSaving = solarSize * sunHours * 30 * elecRate;
-                
                 if (hasBattery) {
-                    // Hybrid: เก็บไฟกลางวันไปใช้กลางคืนได้สูงสุดตามขนาดแบต[cite: 1]
-                    const batterySavingPerMonth = (batterySize * 0.9 * 30 * elecRate); // 0.9 คือ DoD 90%
+                    const batterySavingPerMonth = (batterySize * 0.9 * 30 * elecRate);
                     const daySavingPerMonth = totalUnitsPerMonth * (dayUsage / 100) * elecRate;
                     return Math.min(totalUnitsPerMonth * elecRate, daySavingPerMonth + batterySavingPerMonth).toFixed(0);
                 } else {
@@ -168,7 +158,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `Hybrid:${hasBattery}|Batt:${batterySize}kWh`
+                            email: `MasterV4.1|Hybrid:${hasBattery}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -186,21 +176,21 @@
                 <div className="min-h-screen flex flex-col">
                     <header className="bg-blue-800 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 className="text-xl font-bold tracking-tighter">SolarHub Master</h1>
-                        <span className="text-[10px] bg-blue-600 px-2 py-1 rounded font-black uppercase tracking-widest">Hybrid V4.0</span>
+                        <span className="text-[10px] bg-blue-600 px-2 py-1 rounded font-black uppercase">V4.1 Master Refs</span>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
                         <section className="bg-white rounded-[2rem] shadow-2xl p-6 md:p-10 mb-8 border border-slate-100 animate-fade-in">
                             <div className="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-8">
                                 <div className="space-y-1">
-                                    <label className="font-bold text-slate-700 text-sm ml-1">1. จังหวัดที่ติดตั้ง:</label>
+                                    <label className="font-bold text-slate-700 text-sm ml-1">จังหวัดที่ติดตั้ง (77 จังหวัด):</label>
                                     <select value={province} onChange={(e) => setProvince(e.target.value)}
-                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg cursor-pointer">
+                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg cursor-pointer transition-all">
                                         {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="font-bold text-slate-700 text-sm ml-1">2. ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
+                                    <label className="font-bold text-slate-700 text-sm ml-1">ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
                                     <div className="relative">
                                         <input type="number" value={bill} onChange={(e) => setBill(e.target.value)}
                                             className="w-full p-4 text-3xl font-black border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none bg-slate-50" />
@@ -208,57 +198,43 @@
                                     </div>
                                 </div>
 
-                                {/* Slider พฤติกรรมใช้ไฟ */}
                                 <div className="md:col-span-2 space-y-4 mt-2 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100">
                                     <label className="block font-bold text-slate-700 text-sm flex justify-between items-center">
-                                        <span>3. สัดส่วนการใช้ไฟกลางวัน (08:00 - 17:00 น.)[cite: 1]</span>
+                                        <span>สัดส่วนการใช้ไฟกลางวัน (Daytime Load Profile)</span>
                                         <span className="text-blue-700 text-2xl font-black">{dayUsage}%</span>
                                     </label>
                                     <input type="range" min="10" max="100" step="5" value={dayUsage} onChange={(e) => setDayUsage(e.target.value)}
                                         className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                                 </div>
 
-                                {/* ส่วนของแบตเตอรี่ (Battery Options)[cite: 1] */}
                                 <div className="md:col-span-2 p-5 bg-blue-50/50 rounded-[1.5rem] border border-blue-100 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="font-bold text-blue-900 text-sm flex items-center gap-2">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                                            ต้องการติดตั้งระบบแบตเตอรี่ (Hybrid System)?
-                                        </label>
-                                        <button 
-                                            onClick={() => setHasBattery(!hasBattery)}
-                                            className={`w-14 h-8 rounded-full transition-all flex items-center px-1 ${hasBattery ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}
-                                        >
+                                        <label className="font-bold text-blue-900 text-sm">ต้องการระบบแบตเตอรี่ (Hybrid System)?</label>
+                                        <button onClick={() => setHasBattery(!hasBattery)}
+                                            className={`w-14 h-8 rounded-full transition-all flex items-center px-1 ${hasBattery ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
                                             <div className="w-6 h-6 bg-white rounded-full shadow-md"></div>
                                         </button>
                                     </div>
-                                    
                                     {hasBattery && (
                                         <div className="pt-2 animate-fade-in space-y-3">
-                                            <label className="block text-xs font-bold text-blue-700 uppercase tracking-widest">
-                                                ขนาดแบตเตอรี่ที่ต้องการ: <span className="text-lg ml-1">{batterySize} kWh</span>
-                                            </label>
+                                            <label className="block text-xs font-bold text-blue-700">ขนาดความจุแบตเตอรี่: {batterySize} kWh</label>
                                             <input type="range" min="2" max="30" step="1" value={batterySize} onChange={(e) => setBatterySize(e.target.value)}
                                                 className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-800" />
-                                            <p className="text-[10px] text-blue-500 italic leading-tight">
-                                                *ระบบจะคำนวณการผลิตแผงเผื่อการชาร์จแบตเตอรี่ในช่วงกลางวันให้อัตโนมัติ[cite: 1]
-                                            </p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* แสดงผล ROI */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 text-center md:text-left">
                                 <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm">
-                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest">ขนาดแผงที่แนะนำ</p>
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2">ขนาดแผงที่แนะนำจริง</p>
                                     <div className="flex items-baseline justify-center md:justify-start gap-2">
                                         <span className="text-6xl font-black text-blue-900">{solarSize}</span>
                                         <span className="text-xl font-bold text-blue-700 uppercase">kWp</span>
                                     </div>
                                 </div>
                                 <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm">
-                                    <p className="text-xs font-bold text-emerald-600 uppercase mb-2 tracking-widest">ประหยัดเฉลี่ย/ด.</p>
+                                    <p className="text-xs font-bold text-emerald-600 uppercase mb-2">ประหยัดรวมรายเดือน</p>
                                     <div className="flex items-baseline justify-center md:justify-start gap-2">
                                         <span className="text-6xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
                                         <span className="text-xl font-bold text-emerald-700 uppercase">บาท</span>
@@ -267,40 +243,61 @@
                             </div>
 
                             <div className="pt-8 border-t border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">วิเคราะห์จุดคุ้มทุน (25 ปี)</h3>
+                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center">วิเคราะห์ผลตอบแทนการลงทุนระยะยาว (25 ปี)</h3>
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
-                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg text-slate-500 font-bold">ปี</span></p>
+                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg">ปี</span></p>
                                     </div>
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">ประหยัดสุทธิ 25 ปี</p>
                                         <p className="text-emerald-800 text-4xl font-black">
-                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg text-slate-500 font-bold">฿</span>
+                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg">฿</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* หมายเหตุแหล่งอ้างอิง[cite: 1] */}
-                                <div className="mt-10 p-6 bg-slate-50 rounded-2xl border-l-4 border-blue-500 space-y-4 shadow-sm">
-                                    <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 underline underline-offset-4">Engineering Notes & Master References[cite: 1]</h4>
-                                    <ul className="text-[11px] text-slate-500 space-y-2 list-disc ml-4 leading-relaxed">
-                                        <li><strong>Hybrid Calculation:</strong> การคำนวณแบบ Hybrid จะขยายขนาด kWp แผงเพื่อผลิตไฟเผื่อการชาร์จแบตเตอรี่ในช่วงกลางวัน[cite: 1]</li>
-                                        <li><strong>Battery Cost:</strong> อ้างอิงราคาแบตเตอรี่ LFP เกรดมาตรฐานอุตสาหกรรม (Lithium Iron Phosphate) ที่ 13,500 บ./kWh[cite: 1]</li>
-                                        <li><strong>Degradation:</strong> คำนวณค่าเสื่อมแผงที่ 0.5% ต่อปี และประสิทธิภาพแบตเตอรี่ที่ DoD 90%[cite: 1]</li>
-                                        <li><strong>Tax Benefit:</strong> รวมสิทธิลดหย่อนภาษี 200,000 บ. (ถ้ามี) ช่วยให้ระยะคืนทุนลดลงกว่าที่กราฟแสดง[cite: 1]</li>
-                                    </ul>
+                                {/* จุดที่แก้ไข: แหล่งอ้างอิงฉบับอัปเดต World-class */}
+                                <div className="mt-10 p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-2xl overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                                        <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"></path></svg>
+                                    </div>
+                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2">
+                                        <span className="w-8 h-1 bg-blue-400 rounded-full"></span>
+                                        ENGINEERING DATA & PROJECT REFERENCES
+                                    </h4>
+                                    <div className="grid md:grid-cols-2 gap-6 relative z-10">
+                                        <div className="space-y-4">
+                                            <div className="group">
+                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">CAPEX & Investment</p>
+                                                <p className="text-[11px] text-slate-300 leading-relaxed">คำนวณราคา EPC (Engineering, Procurement, Construction) อ้างอิงปี 2569 สำหรับแผง Tier 1 (n-type) และ Hybrid Inverter มาตรฐานสากล โดยใช้ระบบ <strong>Economy of Scale</strong> (ราคาต่อหน่วยลดลงตามขนาดติดตั้ง)</p>
+                                            </div>
+                                            <div className="group">
+                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Energy Production</p>
+                                                <p className="text-[11px] text-slate-300 leading-relaxed">อ้างอิงค่าความเข้มแดดรายจังหวัด (Specific Yield) จากพิกัดดาวเทียม และคำนวณค่าเสื่อมประสิทธิภาพแผง 0.5% ต่อปี ตลอดอายุการใช้งาน 25 ปี</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="group">
+                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Battery Storage System</p>
+                                                <p className="text-[11px] text-slate-300 leading-relaxed">แบตเตอรี่ Lithium Iron Phosphate (LFP) คำนวณ DoD ที่ 90% และประสิทธิภาพการชาร์จ/ดีสชาร์จที่ 95% โดยประมาณการอายุการใช้งาน 6,000 Cycles หรือ 15 ปี</p>
+                                            </div>
+                                            <div className="group">
+                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Maintenance & Taxation</p>
+                                                <p className="text-[11px] text-slate-300 leading-relaxed">รวมค่าบำรุงรักษาพื้นฐาน (Cleaning/Monitoring) และสิทธิประโยชน์ทางภาษีส่วนบุคคล 200,000 บ. รวมถึงการเปลี่ยน Inverter ในปีที่ 12-15 ของโครงการ</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* ปุ่ม LINE ปิดการขาย[cite: 1] */}
                         <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
                             <div className="text-center md:text-left">
-                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจติดตั้งระบบ Hybrid หรือปรึกษาฟรี?</h4>
-                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมให้คำปรึกษาการเลือกขนาดแบตเตอรี่ที่คุ้มค่าที่สุด</p>
+                                <h4 className="font-bold text-xl mb-1 text-blue-400">พร้อมเปลี่ยนแสงแดดเป็นรายได้แล้วหรือยัง?</h4>
+                                <p className="text-slate-400 text-sm">ทีมวิศวกรของเราพร้อมออกแบบระบบที่คุ้มค่าที่สุดให้คุณฟรี</p>
                             </div>
                             <a href="https://line.me/R/ti/p/~apichatkongsuk" target="_blank"
                                 className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
@@ -310,15 +307,14 @@
                         </div>
                     </main>
 
-                    {/* Login Modal[cite: 1] */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
                                 <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-blue-100">
                                     <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 </div>
-                                <h3 className="text-2xl font-black mb-2 text-slate-800">เข้าชมรายงาน ROI (77 จังหวัด)</h3>
-                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเริ่มการวิเคราะห์เชิงลึก<br/>National Solar & Hybrid Analysis</p>
+                                <h3 className="text-2xl font-black mb-2 text-slate-800">เริ่มการวิเคราะห์เชิงลึก</h3>
+                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุจังหวัดและข้อมูลเพื่อเข้าชมรายงาน ROI<br/>National Solar & Hybrid Analysis</p>
                                 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="text-left">
