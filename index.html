@@ -39,6 +39,7 @@
             const [showModal, setShowModal] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
             const [formData, setFormData] = useState({ name: '', tel: '' });
+            const [isSubmitted, setIsSubmitted] = useState(false);
 
             // --- Expert Calculation Logic ---
             const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
@@ -71,11 +72,13 @@
                         mode: 'no-cors' 
                     });
                     setIsRegistered(true);
+                    setIsSubmitted(true);
                     setShowModal(false);
                 } catch (error) {
                     console.error('Error:', error);
                     alert('ไม่สามารถเชื่อมต่อระบบฐานข้อมูลได้ แต่คุณสามารถดูผลการคำนวณได้ครับ');
                     setIsRegistered(true);
+                    setIsSubmitted(true);
                     setShowModal(false);
                 } finally {
                     setIsLoading(false);
@@ -159,6 +162,14 @@
                             <button className="bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-xl transition-transform active:scale-95 shadow-lg">
                                 ติดต่อเจ้าหน้าที่
                             </button>
+                            <a 
+    href="https://line.me/ti/p/@apichatkongsuk" 
+    target="_blank"
+    className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-xl transition-transform active:scale-95 shadow-lg flex items-center gap-2"
+>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-5 h-5" />
+    ปรึกษาทาง LINE
+</a>
                         </div>
                     </main>
 
