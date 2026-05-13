@@ -15,31 +15,61 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState } = React;
+
+        // 1. วาง URL ที่ได้จาก Google Apps Script ตรงนี้ครับ
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
 
         const App = () => {
-            // --- 1. State สำหรับเก็บค่าจาก User ---
             const [bill, setBill] = useState(5000);
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
+            const [isLoading, setIsLoading] = useState(false);
 
-            // --- 2. Logic การคำนวณเบื้องต้น (Expert Logic) ---
-            const solarSize = (bill / 4.2 / 30 / 3.8).toFixed(2); // สูตร: บิล / ค่าไฟ / วัน / ชม.แดด
+            // ข้อมูลสำหรับลงทะเบียน
+            const [formData, setFormData] = useState({ name: '', tel: '' });
+
+            const solarSize = (bill / 4.2 / 30 / 3.8).toFixed(2);
             const estSaving = (solarSize * 3.8 * 30 * 4.2).toFixed(0);
 
-            // --- 3. ส่วนประกอบหน้าเว็บ (Components) ---
+            // 2. ฟังก์ชันส่งข้อมูลไปยัง Google Sheets
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+
+                try {
+                    // ส่งข้อมูลไปที่ Google Apps Script
+                    await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            name: formData.name,
+                            message: formData.tel, // ใน Apps Script เราใช้ชื่อตัวแปร message รับเบอร์โทร
+                            email: "-",
+                            province: "-"
+                        }),
+                        mode: 'no-cors' 
+                    });
+
+                    // ถ้าส่งสำเร็จ ให้ปิด Modal และแสดงหน้าคำนวณ
+                    setIsRegistered(true);
+                    setShowModal(false);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
             return (
                 <div className="min-h-screen">
-                    {/* Header */}
                     <header className="bg-blue-600 p-4 text-white shadow-lg">
                         <h1 className="text-xl font-bold text-center">Solar Energy Calculator</h1>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-6">
-                        {/* ส่วนคำนวณ */}
                         <section className="bg-white rounded-xl shadow-md p-8 mb-6">
                             <h2 className="text-2xl font-bold mb-4 text-blue-800 text-center">วิเคราะห์ความคุ้มค่า</h2>
-                            
                             <div className="mb-8">
                                 <label className="block mb-2 font-bold">ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
                                 <input 
@@ -49,7 +79,6 @@
                                     className="w-full p-4 text-2xl border-2 border-blue-100 rounded-lg focus:border-blue-500 outline-none"
                                 />
                             </div>
-
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="bg-blue-50 p-6 rounded-lg text-center">
                                     <p className="text-sm text-blue-600">ขนาดติดตั้งที่แนะนำ</p>
@@ -61,22 +90,36 @@
                                 </div>
                             </div>
                         </section>
-
-                        <button className="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition">
-                            สนใจติดตั้ง / ขอใบเสนอราคา
-                        </button>
                     </main>
 
-                    {/* Registration Modal (ส่วนที่คุณต้องการ) */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
                                 <h3 className="text-xl font-bold mb-4 text-center">กรุณาลงทะเบียน</h3>
                                 <p className="text-gray-500 text-sm mb-6 text-center">กรอกข้อมูลเพื่อดูผลการวิเคราะห์เชิงลึก</p>
-                                <form onSubmit={(e) => { e.preventDefault(); setIsRegistered(true); setShowModal(false); }}>
-                                    <input required type="text" placeholder="ชื่อ-นามสกุล" className="w-full border p-3 rounded-lg mb-3" />
-                                    <input required type="tel" placeholder="เบอร์โทรศัพท์" className="w-full border p-3 rounded-lg mb-4" />
-                                    <button className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg">เข้าสู่ระบบคำนวณ</button>
+                                <form onSubmit={handleSubmit}>
+                                    <input 
+                                        required 
+                                        type="text" 
+                                        placeholder="ชื่อ-นามสกุล" 
+                                        className="w-full border p-3 rounded-lg mb-3"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    />
+                                    <input 
+                                        required 
+                                        type="tel" 
+                                        placeholder="เบอร์โทรศัพท์" 
+                                        className="w-full border p-3 rounded-lg mb-4"
+                                        value={formData.tel}
+                                        onChange={(e) => setFormData({...formData, tel: e.target.value})}
+                                    />
+                                    <button 
+                                        disabled={isLoading}
+                                        className={`w-full ${isLoading ? 'bg-gray-400' : 'bg-blue-600'} text-white font-bold py-3 rounded-lg transition`}
+                                    >
+                                        {isLoading ? 'กำลังส่งข้อมูล...' : 'เข้าสู่ระบบคำนวณ'}
+                                    </button>
                                 </form>
                             </div>
                         </div>
