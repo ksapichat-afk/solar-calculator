@@ -123,12 +123,15 @@
                 return (saving * (1 - degradation)).toFixed(0);
             }, [solarSize, sunHours]);
             const estInvestment = useMemo(() => {
-    let pricePerKWp = 45000; // ถ้าระบบเล็ก (เช่น 3 kWp) ราคาจะสูงต่อหน่วย
-    if (solarSize > 5) pricePerKWp = 38000;
-    if (solarSize > 10) pricePerKWp = 32000;
-    if (solarSize > 20) pricePerKWp = 28000;
-    
-    return (solarSize * pricePerKWp).toFixed(0);
+    let pricePerKWp = 45000; // ค่าเริ่มต้นสำหรับระบบเล็ก
+    const size = parseFloat(solarSize);
+
+    if (size >= 3 && size < 5) pricePerKWp = 42000;
+    else if (size >= 5 && size < 10) pricePerKWp = 38000;
+    else if (size >= 10 && size < 20) pricePerKWp = 32000;
+    else if (size >= 20) pricePerKWp = 28000;
+
+    return (size * pricePerKWp).toFixed(0);
 }, [solarSize]);
 
             const handleSubmit = async (e) => {
