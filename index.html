@@ -54,7 +54,7 @@
                         labels: labels,
                         datasets: [
                             {
-                                label: 'กำไรสะสม (บาท)',
+                                label: 'ประหยัดสะสม (บาท)',
                                 data: dataSaving,
                                 backgroundColor: 'rgba(16, 185, 129, 0.6)',
                                 borderColor: '#10b981',
@@ -77,7 +77,16 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } },
+                        plugins: { 
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + Number(context.parsed.y).toLocaleString() + ' บ.';
+                                    }
+                                }
+                            }
+                        },
                         scales: {
                             y: {
                                 beginAtZero: true,
@@ -104,7 +113,6 @@
 
             const solarSize = useMemo(() => (bill / elecRate / 30 / sunHours).toFixed(2), [bill, sunHours]);
             
-            // Dynamic Investment based on Economy of Scale
             const estInvestment = useMemo(() => {
                 const size = parseFloat(solarSize);
                 let pricePerKWp = 45000;
@@ -117,7 +125,7 @@
 
             const estSaving = useMemo(() => {
                 const saving = solarSize * sunHours * 30 * elecRate;
-                return (saving * 0.995).toFixed(0); // 1st year with 0.5% degradation
+                return (saving * 0.995).toFixed(0); 
             }, [solarSize, sunHours]);
 
             const handleSubmit = async (e) => {
@@ -130,7 +138,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: "Solar-Expert-V3"
+                            email: "Solar-Expert-V3-Fixed"
                         }),
                         mode: 'no-cors' 
                     });
@@ -149,7 +157,7 @@
                     <header className="bg-blue-800 p-5 text-white shadow-xl">
                         <div className="max-w-4xl mx-auto flex justify-between items-center">
                             <h1 className="text-xl font-bold tracking-tight">SolarHub Expert ROI</h1>
-                            <span className="text-xs bg-blue-600 px-2 py-1 rounded font-bold uppercase tracking-widest">Official V3.0</span>
+                            <span className="text-xs bg-blue-600 px-2 py-1 rounded font-bold uppercase tracking-widest">Official V3.1</span>
                         </div>
                     </header>
 
@@ -191,9 +199,6 @@
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                                 <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"></path></svg>
-                                    </div>
                                     <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest">ขนาดที่แนะนำ</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-6xl font-black text-blue-900">{solarSize}</span>
@@ -202,9 +207,6 @@
                                 </div>
 
                                 <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd"></path></svg>
-                                    </div>
                                     <p className="text-xs font-bold text-emerald-600 uppercase mb-2 tracking-widest">ประหยัดเฉลี่ย</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-6xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
@@ -218,29 +220,28 @@
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Payback Period</p>
-                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg">ปี</span></p>
+                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">ระยะเวลาคืนทุน</p>
+                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg text-slate-500">ปี</span></p>
                                     </div>
-                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Total Saving (25Y)</p>
+                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">ประหยัดรวมสุทธิ 25 ปี</p>
                                         <p className="text-emerald-800 text-4xl font-black">
-                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / (1 - 0.005))).toLocaleString()} <span className="text-lg">฿</span>
+                                            {/* แก้ไขสูตร: หารด้วย 0.005 (1-0.995) เพื่อให้ได้ผลรวมที่ตรงกับกราฟ */}
+                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg text-slate-500">฿</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* SECTION: หมายเหตุและแหล่งอ้างอิง */}
                                 <div className="mt-10 p-6 bg-slate-50 rounded-2xl border-l-4 border-blue-500">
                                     <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                                         <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path></svg>
                                         หมายเหตุและแหล่งอ้างอิงทางวิศวกรรม
                                     </h4>
                                     <ul className="text-[11px] text-slate-500 space-y-2 leading-relaxed list-disc ml-4">
-                                        <li><strong>ราคาติดตั้ง (Investment):</strong> อ้างอิงราคากลางปี 2569 สำหรับแผง Tier 1 และ Inverter มาตรฐานสากล โดยใช้ระบบ <strong>Economy of Scale</strong> (ราคาต่อ kWp ลดลงเมื่อขนาดติดตั้งใหญ่ขึ้น) ครอบคลุมค่าอุปกรณ์ ค่าแรง และการดำเนินการขออนุญาต</li>
-                                        <li><strong>การคำนวณรายได้ (Savings):</strong> อ้างอิงอัตราค่าไฟฟ้าคงที่ 4.2 บาท/หน่วย และค่าความเข้มแสงแดด (Specific Yield) รายจังหวัดตามฐานข้อมูลพิกัดดาวเทียมทางพลังงาน</li>
+                                        <li><strong>ราคาติดตั้ง (Investment):</strong> อ้างอิงราคากลางปี 2569 สำหรับแผง Tier 1 และ Inverter มาตรฐานสากล โดยใช้ระบบ <strong>Economy of Scale</strong> ครอบคลุมค่าอุปกรณ์ ค่าแรง และการดำเนินการขออนุญาต</li>
+                                        <li><strong>การคำนวณรายได้ (Savings):</strong> อ้างอิงอัตราค่าไฟฟ้าคงที่ 4.2 บาท/หน่วย และค่าความเข้มแสงแดดรายจังหวัด</li>
                                         <li><strong>ค่าเสื่อมประสิทธิภาพ (Degradation):</strong> คำนวณการลดลงของประสิทธิภาพแผง 0.5% ต่อปี ตามมาตรฐานการรับประกันวัสดุ 25 ปี</li>
-                                        <li><strong>สิทธิประโยชน์ทางภาษี:</strong> การคำนวณนี้ยังไม่ได้รวมการหักลดหย่อนภาษีเงินได้บุคคลธรรมดา (สูงสุด 200,000 บาท) ซึ่งจะช่วยให้คืนทุนเร็วกว่าที่แสดงในกราฟ</li>
                                     </ul>
                                 </div>
                             </div>
