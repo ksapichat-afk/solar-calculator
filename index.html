@@ -123,7 +123,12 @@
                 return (saving * (1 - degradation)).toFixed(0);
             }, [solarSize, sunHours]);
             const estInvestment = useMemo(() => {
-    return (solarSize * 35000).toFixed(0); // ประมาณการค่าติดตั้ง 35,000 ต่อ kWp
+    let pricePerKWp = 45000; // ถ้าระบบเล็ก (เช่น 3 kWp) ราคาจะสูงต่อหน่วย
+    if (solarSize > 5) pricePerKWp = 38000;
+    if (solarSize > 10) pricePerKWp = 32000;
+    if (solarSize > 20) pricePerKWp = 28000;
+    
+    return (solarSize * pricePerKWp).toFixed(0);
 }, [solarSize]);
 
             const handleSubmit = async (e) => {
