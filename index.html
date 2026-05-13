@@ -41,8 +41,8 @@
         const ctx = canvasRef.current.getContext('2d');
         if (chartRef.current) chartRef.current.destroy();
 
-        // คำนวณข้อมูล 15 ปี
-        const labels = Array.from({length: 15}, (_, i) => `ปีที่ ${i+1}`);
+        // คำนวณข้อมูล 25 ปี
+        const labels = Array.from({length: 25}, (_, i) => `ปีที่ ${i+1}`);
         let cumulativeSaving = 0;
         const dataSaving = labels.map((_, i) => {
             cumulativeSaving += savingYearly * Math.pow(0.995, i); // หักค่าเสื่อมแผงรายปี
@@ -50,34 +50,49 @@
         });
 
         chartRef.current = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'กำไรสะสม (บาท)',
-                        data: dataSaving,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'เงินลงทุน (บาท)',
-                        data: Array(15).fill(investment),
-                        borderColor: '#ef4444',
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
-                    }
-                ]
+    type: 'bar', // เปลี่ยนจาก line เป็น bar
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'กำไรสะสม (บาท)',
+                data: dataSaving,
+                backgroundColor: 'rgba(16, 185, 129, 0.6)', // สีแท่งเขียวแบบโปร่งแสง
+                borderColor: '#10b981',
+                borderWidth: 1,
+                order: 2 // ให้แท่งอยู่ด้านหลัง
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+            {
+                label: 'เงินลงทุน (บาท)',
+                data: Array(25).fill(investment),
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                type: 'line', // ให้เส้นเงินลงทุนยังเป็นเส้นประ เพื่อให้เห็นจุดตัดชัดเจน
+                fill: false,
+                pointRadius: 0,
+                order: 1 // ให้เส้นอยู่ด้านหน้าแท่ง
             }
-        });
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { position: 'bottom' } 
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString() + ' บ.';
+                    }
+                }
+            }
+        }
+    }
+});
     }, [savingYearly, investment]);
 
     return <div className="h-64 w-full mt-4"><canvas ref={canvasRef}></canvas></div>;
@@ -215,13 +230,22 @@
         investment={estInvestment} 
     />
     
-    <div className="mt-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
-        <p className="text-sm font-bold text-slate-700">
-            ระยะเวลาคืนทุนโดยประมาณ: <span className="text-orange-600 text-xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} ปี</span>
+<div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ระยะเวลาคืนทุน</p>
+        <p className="text-orange-600 text-2xl font-black">
+            {(estInvestment / (estSaving * 12)).toFixed(1)} ปี
         </p>
-        <p className="text-[10px] text-slate-400 mt-1">*อ้างอิงราคาติดตั้งโดยประมาณ {Number(estInvestment).toLocaleString()} บาท</p>
+    </div>
+    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">ยอดประหยัดรวม 25 ปี</p>
+        <p className="text-emerald-900 text-2xl font-black">
+            {/* สูตรคำนวณเงินประหยัดสะสม 25 ปี แบบหักค่าเสื่อมแผงรายปี */}
+            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / (1 - 0.995))).toLocaleString()} บาท
+        </p>
     </div>
 </div>
+<p className="text-[10px] text-slate-400 mt-4 text-center">*อ้างอิงราคาติดตั้งโดยประมาณ {Number(estInvestment).toLocaleString()} บาท และค่าเสื่อมแผงปีละ 0.5%</p>
                         </section>
 
                         <div className="bg-slate-800 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
