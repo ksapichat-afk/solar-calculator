@@ -8,6 +8,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
@@ -31,6 +32,56 @@
             "นนทบุรี": 4.01, "ปทุมธานี": 4.05, "สมุทรปราการ": 4.00, "ระยอง": 4.10,
             "นครปฐม": 4.10, "พิษณุโลก": 4.15, "อุดรธานี": 4.20
         };
+
+        const SolarChart = ({ savingYearly, investment }) => {
+    const canvasRef = React.useRef(null);
+    const chartRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const ctx = canvasRef.current.getContext('2d');
+        if (chartRef.current) chartRef.current.destroy();
+
+        // คำนวณข้อมูล 15 ปี
+        const labels = Array.from({length: 15}, (_, i) => `ปีที่ ${i+1}`);
+        let cumulativeSaving = 0;
+        const dataSaving = labels.map((_, i) => {
+            cumulativeSaving += savingYearly * Math.pow(0.995, i); // หักค่าเสื่อมแผงรายปี
+            return cumulativeSaving.toFixed(0);
+        });
+
+        chartRef.current = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'กำไรสะสม (บาท)',
+                        data: dataSaving,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'เงินลงทุน (บาท)',
+                        data: Array(15).fill(investment),
+                        borderColor: '#ef4444',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }, [savingYearly, investment]);
+
+    return <div className="h-64 w-full mt-4"><canvas ref={canvasRef}></canvas></div>;
+};
 
         const App = () => {
             const [bill, setBill] = useState(5000);
@@ -56,6 +107,9 @@
                 const saving = solarSize * sunHours * 30 * elecRate;
                 return (saving * (1 - degradation)).toFixed(0);
             }, [solarSize, sunHours]);
+            const estInvestment = useMemo(() => {
+    return (solarSize * 35000).toFixed(0); // ประมาณการค่าติดตั้ง 35,000 ต่อ kWp
+}, [solarSize]);
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
@@ -152,6 +206,22 @@
                                     </p>
                                 </div>
                             </div>
+                            <div className="mt-10 pt-8 border-t border-slate-100">
+    <h3 className="text-lg font-bold text-slate-800 mb-2 text-center">กราฟวิเคราะห์จุดคุ้มทุน (ROI)</h3>
+    <p className="text-[10px] text-slate-500 text-center mb-4">เส้นสีเขียว (กำไรสะสม) ตัดเส้นสีแดง (เงินต้น) เมื่อไหร่ คือปีที่คืนทุน</p>
+    
+    <SolarChart 
+        savingYearly={estSaving * 12} 
+        investment={estInvestment} 
+    />
+    
+    <div className="mt-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
+        <p className="text-sm font-bold text-slate-700">
+            ระยะเวลาคืนทุนโดยประมาณ: <span className="text-orange-600 text-xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} ปี</span>
+        </p>
+        <p className="text-[10px] text-slate-400 mt-1">*อ้างอิงราคาติดตั้งโดยประมาณ {Number(estInvestment).toLocaleString()} บาท</p>
+    </div>
+</div>
                         </section>
 
                         <div className="bg-slate-800 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
