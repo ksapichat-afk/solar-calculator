@@ -3,106 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Solar ROI Project</title>
+    <title>Solar ROI Expert Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Sarabun', sans-serif; }</style>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useMemo } = React;
 
-        // 1. วาง URL ที่ได้จาก Google Apps Script ตรงนี้ครับ
+        // 1. วาง URL ที่ได้จาก Google Apps Script ของคุณที่นี่
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
+
+        // ข้อมูลชั่วโมงแดดเฉลี่ยรายจังหวัด (Expert Data)
+        const PROVINCE_SUN_HOURS = {
+            "กรุงเทพมหานคร": 4.01, "เชียงใหม่": 3.85, "ขอนแก่น": 4.22, "นครราชสีมา": 4.35,
+            "ชลบุรี": 4.12, "ภูเก็ต": 3.95, "สงขลา": 3.80, "สุราษฎร์ธานี": 3.90,
+            "นนทบุรี": 4.01, "ปทุมธานี": 4.05, "สมุทรปราการ": 4.00, "ระยอง": 4.10,
+            "นครปฐม": 4.10, "พิษณุโลก": 4.15, "อุดรธานี": 4.20
+        };
 
         const App = () => {
             const [bill, setBill] = useState(5000);
+            const [province, setProvince] = useState("กรุงเทพมหานคร");
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
-
-            // ข้อมูลสำหรับลงทะเบียน
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
-            const solarSize = (bill / 4.2 / 30 / 3.8).toFixed(2);
-            const estSaving = (solarSize * 3.8 * 30 * 4.2).toFixed(0);
+            // --- Expert Calculation Logic ---
+            const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
+            const elecRate = 4.2; // ค่าไฟเฉลี่ยต่อหน่วย
+            const degradation = 0.005; // ค่าเสื่อมแผง 0.5% ต่อปี
 
-            // 2. ฟังก์ชันส่งข้อมูลไปยัง Google Sheets
+            // คำนวณขนาด kWp ที่แนะนำ (ปัดเศษ 2 ตำแหน่ง)
+            const solarSize = useMemo(() => {
+                return (bill / elecRate / 30 / sunHours).toFixed(2);
+            }, [bill, sunHours]);
+
+            // คำนวณเงินที่ประหยัดได้ต่อเดือน (เฉลี่ยโดยหักค่าเสื่อมแผงปีแรก)
+            const estSaving = useMemo(() => {
+                const saving = solarSize * sunHours * 30 * elecRate;
+                return (saving * (1 - degradation)).toFixed(0);
+            }, [solarSize, sunHours]);
+
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 setIsLoading(true);
-
                 try {
-                    // ส่งข้อมูลไปที่ Google Apps Script
                     await fetch(WEB_APP_URL, {
                         method: 'POST',
                         body: JSON.stringify({
                             name: formData.name,
-                            message: formData.tel, // ใน Apps Script เราใช้ชื่อตัวแปร message รับเบอร์โทร
-                            email: "-",
-                            province: "-"
+                            message: formData.tel,
+                            province: province,
+                            email: "Web-Expert-Mode"
                         }),
                         mode: 'no-cors' 
                     });
-
-                    // ถ้าส่งสำเร็จ ให้ปิด Modal และแสดงหน้าคำนวณ
                     setIsRegistered(true);
                     setShowModal(false);
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+                    alert('ไม่สามารถเชื่อมต่อระบบฐานข้อมูลได้ แต่คุณสามารถดูผลการคำนวณได้ครับ');
+                    setIsRegistered(true);
+                    setShowModal(false);
                 } finally {
                     setIsLoading(false);
                 }
             };
 
             return (
-                <div className="min-h-screen">
-                    <header className="bg-blue-600 p-4 text-white shadow-lg">
-                        <h1 className="text-xl font-bold text-center">Solar Energy Calculator</h1>
+                <div className="min-h-screen flex flex-col">
+                    <header className="bg-blue-700 p-5 text-white shadow-xl">
+                        <div className="max-w-4xl mx-auto flex justify-between items-center">
+                            <h1 className="text-xl font-bold tracking-tight">SolarHub Expert ROI</h1>
+                            <span className="text-xs bg-blue-500 px-2 py-1 rounded">v2.0 Logic Updated</span>
+                        </div>
                     </header>
 
-                    <main className="max-w-4xl mx-auto p-6">
-                        <section className="bg-white rounded-xl shadow-md p-8 mb-6">
-                            <h2 className="text-2xl font-bold mb-4 text-blue-800 text-center">วิเคราะห์ความคุ้มค่า</h2>
-                            <div className="mb-8">
-                                <label className="block mb-2 font-bold">ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
-                                <input 
-                                    type="number" 
-                                    value={bill} 
-                                    onChange={(e) => setBill(e.target.value)}
-                                    className="w-full p-4 text-2xl border-2 border-blue-100 rounded-lg focus:border-blue-500 outline-none"
-                                />
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="bg-blue-50 p-6 rounded-lg text-center">
-                                    <p className="text-sm text-blue-600">ขนาดติดตั้งที่แนะนำ</p>
-                                    <p className="text-4xl font-bold">{solarSize} <span className="text-lg">kWp</span></p>
+                    <main className="max-w-4xl mx-auto p-6 w-full flex-grow">
+                        <section className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-slate-100">
+                            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">วิเคราะห์ระบบที่เหมาะสมสำหรับคุณ</h2>
+                            
+                            <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label className="block mb-2 font-bold text-slate-600 text-sm">1. เลือกจังหวัดที่ติดตั้ง:</label>
+                                    <select 
+                                        value={province} 
+                                        onChange={(e) => setProvince(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all cursor-pointer"
+                                    >
+                                        {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (
+                                            <option key={p} value={p}>{p}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[10px] text-blue-500 mt-2 font-medium">
+                                        *ใช้ค่าความเข้มแดด {sunHours} ชม./วัน (สถิติรายจังหวัด)
+                                    </p>
                                 </div>
-                                <div className="bg-green-50 p-6 rounded-lg text-center">
-                                    <p className="text-sm text-green-600">ประหยัดได้ประมาณ/เดือน</p>
-                                    <p className="text-4xl font-bold text-green-600">{Number(estSaving).toLocaleString()} <span className="text-lg">บาท</span></p>
+
+                                <div>
+                                    <label className="block mb-2 font-bold text-slate-600 text-sm">2. ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="number" 
+                                            value={bill} 
+                                            onChange={(e) => setBill(e.target.value)}
+                                            className="w-full p-4 text-2xl font-bold border-2 border-slate-100 rounded-xl focus:border-blue-500 outline-none transition-all"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">฿</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
+                                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">ขนาดติดตั้งที่แนะนำ</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-5xl font-black text-blue-900">{solarSize}</span>
+                                        <span className="text-xl font-bold text-blue-700">kWp</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-4 leading-relaxed">
+                                        คำนวณเพื่อให้ครอบคลุมการใช้ไฟช่วงกลางวันสูงสุด โดยอ้างอิงจากชั่วโมงแดดในพื้นที่ {province}
+                                    </p>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100">
+                                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">ลดค่าไฟได้ประมาณ</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-5xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
+                                        <span className="text-xl font-bold text-emerald-700">บาท/ด.</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-4 leading-relaxed">
+                                        *คำนวณโดยหักค่าเสื่อมสภาพประสิทธิภาพแผง 0.5% ต่อปี ตามมาตรฐานวิศวกรรม
+                                    </p>
                                 </div>
                             </div>
                         </section>
+
+                        <div className="bg-slate-800 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+                            <div>
+                                <h4 className="font-bold text-lg">ต้องการใบเสนอราคาอย่างเป็นทางการ?</h4>
+                                <p className="text-slate-400 text-sm">ทีมวิศวกรของเราพร้อมออกแบบระบบให้ฟรี</p>
+                            </div>
+                            <button className="bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-xl transition-transform active:scale-95 shadow-lg">
+                                ติดต่อเจ้าหน้าที่
+                            </button>
+                        </div>
                     </main>
 
                     {showModal && !isRegistered && (
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
-                                <h3 className="text-xl font-bold mb-4 text-center">กรุณาลงทะเบียน</h3>
-                                <p className="text-gray-500 text-sm mb-6 text-center">กรอกข้อมูลเพื่อดูผลการวิเคราะห์เชิงลึก</p>
-                                <form onSubmit={handleSubmit}>
+                        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-white/20 animate-in fade-in zoom-in duration-300">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 text-center text-slate-800">เข้าชมรายงานเชิงลึก</h3>
+                                <p className="text-slate-500 text-sm mb-8 text-center leading-relaxed">กรุณาระบุข้อมูลเพื่อเข้าสู่ระบบคำนวณ <br/>Expert ROI Calculator</p>
+                                
+                                <form onSubmit={handleSubmit} className="space-y-4">
                                     <input 
                                         required 
                                         type="text" 
                                         placeholder="ชื่อ-นามสกุล" 
-                                        className="w-full border p-3 rounded-lg mb-3"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl focus:border-blue-500 outline-none transition-all"
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                     />
@@ -110,15 +184,15 @@
                                         required 
                                         type="tel" 
                                         placeholder="เบอร์โทรศัพท์" 
-                                        className="w-full border p-3 rounded-lg mb-4"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl focus:border-blue-500 outline-none transition-all"
                                         value={formData.tel}
                                         onChange={(e) => setFormData({...formData, tel: e.target.value})}
                                     />
                                     <button 
                                         disabled={isLoading}
-                                        className={`w-full ${isLoading ? 'bg-gray-400' : 'bg-blue-600'} text-white font-bold py-3 rounded-lg transition`}
+                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95`}
                                     >
-                                        {isLoading ? 'กำลังส่งข้อมูล...' : 'เข้าสู่ระบบคำนวณ'}
+                                        {isLoading ? 'กำลังวิเคราะห์ข้อมูล...' : 'ดูผลการวิเคราะห์'}
                                     </button>
                                 </form>
                             </div>
