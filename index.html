@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Calculator - SolarHub</title>
+    <title>Solar ROI Expert Calculator - Master V3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -12,8 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .animate-fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -77,16 +76,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { position: 'bottom' },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + Number(context.parsed.y).toLocaleString() + ' บ.';
-                                    }
-                                }
-                            }
-                        },
+                        plugins: { legend: { position: 'bottom' } },
                         scales: {
                             y: {
                                 beginAtZero: true,
@@ -103,6 +93,7 @@
         const App = () => {
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
+            const [dayUsage, setDayUsage] = useState(70); // State ใหม่
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
@@ -111,7 +102,12 @@
             const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
             const elecRate = 4.2;
 
-            const solarSize = useMemo(() => (bill / elecRate / 30 / sunHours).toFixed(2), [bill, sunHours]);
+            // Logic ใหม่: คำนวณตามพฤติกรรมการใช้ไฟกลางวัน
+            const solarSize = useMemo(() => {
+                const totalUnitsPerMonth = bill / elecRate;
+                const dayUnitsPerDay = (totalUnitsPerMonth * (dayUsage / 100)) / 30;
+                return (dayUnitsPerDay / sunHours).toFixed(2);
+            }, [bill, sunHours, dayUsage]);
             
             const estInvestment = useMemo(() => {
                 const size = parseFloat(solarSize);
@@ -138,7 +134,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: "Solar-Expert-V3-Fixed"
+                            email: "V3.3-Behavior-Mode"
                         }),
                         mode: 'no-cors' 
                     });
@@ -154,59 +150,53 @@
 
             return (
                 <div className="min-h-screen flex flex-col">
-                    <header className="bg-blue-800 p-5 text-white shadow-xl">
-                        <div className="max-w-4xl mx-auto flex justify-between items-center">
-                            <h1 className="text-xl font-bold tracking-tight">SolarHub Expert ROI</h1>
-                            <span className="text-xs bg-blue-600 px-2 py-1 rounded font-bold uppercase tracking-widest">Official V3.1</span>
-                        </div>
+                    <header className="bg-blue-800 p-5 text-white shadow-xl text-center">
+                        <h1 className="text-xl font-bold">SolarHub ROI <span className="text-xs bg-blue-600 px-2 py-1 rounded ml-2">BEHAVIOR-DRIVEN V3.3</span></h1>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow">
                         <section className="bg-white rounded-3xl shadow-2xl p-6 md:p-10 mb-8 border border-slate-100 animate-fade-in">
-                            <div className="text-center mb-10">
-                                <h2 className="text-3xl font-black text-slate-800 mb-2">วิเคราะห์ผลตอบแทนการลงทุน</h2>
-                                <p className="text-slate-500 text-sm">แม่นยำด้วยสถิติแดนรายจังหวัดและ Economy of Scale</p>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-8 mb-10">
-                                <div className="space-y-2">
-                                    <label className="block font-bold text-slate-700 text-sm ml-1">1. จังหวัดที่ติดตั้ง:</label>
-                                    <select 
-                                        value={province} 
-                                        onChange={(e) => setProvince(e.target.value)}
-                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none transition-all cursor-pointer font-bold text-lg"
-                                    >
-                                        {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (
-                                            <option key={p} value={p}>{p}</option>
-                                        ))}
+                            <div className="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-10">
+                                <div className="space-y-1">
+                                    <label className="font-bold text-slate-700 text-sm ml-1">1. จังหวัดที่ติดตั้ง:</label>
+                                    <select value={province} onChange={(e) => setProvince(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg cursor-pointer transition-all">
+                                        {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
                                     </select>
-                                    <p className="text-[11px] text-blue-600 font-bold ml-1 italic underline">สถิติความเข้มแดด {sunHours} ชม./วัน</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="font-bold text-slate-700 text-sm ml-1">2. ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
+                                    <div className="relative">
+                                        <input type="number" value={bill} onChange={(e) => setBill(e.target.value)}
+                                            className="w-full p-4 text-3xl font-black border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none bg-slate-50" />
+                                        <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">฿</span>
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block font-bold text-slate-700 text-sm ml-1">2. ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="number" 
-                                            value={bill} 
-                                            onChange={(e) => setBill(e.target.value)}
-                                            className="w-full p-4 text-3xl font-black border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none bg-slate-50"
-                                        />
-                                        <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">฿</span>
+                                {/* เพิ่มแถบสไลด์ปรับพฤติกรรม */}
+                                <div className="md:col-span-2 space-y-3 mt-4 p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                                    <label className="block font-bold text-slate-700 text-sm flex justify-between items-center">
+                                        <span>3. พฤติกรรมการใช้ไฟกลางวัน (08:00 - 17:00 น.)</span>
+                                        <span className="text-blue-700 text-2xl font-black">{dayUsage}%</span>
+                                    </label>
+                                    <input type="range" min="10" max="100" step="5" value={dayUsage} onChange={(e) => setDayUsage(e.target.value)}
+                                        className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                    <div className="flex justify-between text-[10px] text-slate-400 font-bold px-1 uppercase tracking-wider">
+                                        <span>เน้นคืน (Night)</span>
+                                        <span>เน้นวัน (Daylife)</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                                <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 relative overflow-hidden">
-                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest">ขนาดที่แนะนำ</p>
+                                <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-inner">
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest">ขนาดที่แนะนำจริง</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-6xl font-black text-blue-900">{solarSize}</span>
                                         <span className="text-xl font-bold text-blue-700 uppercase">kWp</span>
                                     </div>
                                 </div>
-
-                                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 relative overflow-hidden">
+                                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-inner">
                                     <p className="text-xs font-bold text-emerald-600 uppercase mb-2 tracking-widest">ประหยัดเฉลี่ย</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-6xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
@@ -216,86 +206,44 @@
                             </div>
 
                             <div className="pt-8 border-t border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-wide">วิเคราะห์จุดคุ้มทุนเชิงลึก (25 ปี)</h3>
+                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">จุดคุ้มทุนรายปี (25 ปี)</h3>
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">ระยะเวลาคืนทุน</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Payback Period</p>
                                         <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg text-slate-500">ปี</span></p>
                                     </div>
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center shadow-sm">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">ประหยัดรวมสุทธิ 25 ปี</p>
                                         <p className="text-emerald-800 text-4xl font-black">
-                                            {/* แก้ไขสูตร: หารด้วย 0.005 (1-0.995) เพื่อให้ได้ผลรวมที่ตรงกับกราฟ */}
                                             {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg text-slate-500">฿</span>
                                         </p>
                                     </div>
                                 </div>
-
-                                <div className="mt-10 p-6 bg-slate-50 rounded-2xl border-l-4 border-blue-500">
-                                    <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path></svg>
-                                        หมายเหตุและแหล่งอ้างอิงทางวิศวกรรม
-                                    </h4>
-                                    <ul className="text-[11px] text-slate-500 space-y-2 leading-relaxed list-disc ml-4">
-                                        <li><strong>ราคาติดตั้ง (Investment):</strong> อ้างอิงราคากลางปี 2569 สำหรับแผง Tier 1 และ Inverter มาตรฐานสากล โดยใช้ระบบ <strong>Economy of Scale</strong> ครอบคลุมค่าอุปกรณ์ ค่าแรง และการดำเนินการขออนุญาต</li>
-                                        <li><strong>การคำนวณรายได้ (Savings):</strong> อ้างอิงอัตราค่าไฟฟ้าคงที่ 4.2 บาท/หน่วย และค่าความเข้มแสงแดดรายจังหวัด</li>
-                                        <li><strong>ค่าเสื่อมประสิทธิภาพ (Degradation):</strong> คำนวณการลดลงของประสิทธิภาพแผง 0.5% ต่อปี ตามมาตรฐานการรับประกันวัสดุ 25 ปี</li>
-                                    </ul>
-                                </div>
                             </div>
                         </section>
-
-                        <div className="bg-slate-900 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
-                            <div className="text-center md:text-left">
-                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจติดตั้งหรือรับคำปรึกษาฟรี?</h4>
-                                <p className="text-slate-400 text-sm">ทีมวิศวกรผู้เชี่ยวชาญพร้อมประเมินหน้างานจริงทั่วประเทศ</p>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                                <a 
-                                    href="https://line.me/R/ti/p/~apichatkongsuk" 
-                                    target="_blank"
-                                    className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg"
-                                >
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-5 h-5" />
-                                    ปรึกษาทาง LINE
-                                </a>
-                            </div>
+                        
+                        <div className="text-[11px] text-slate-400 px-8 mb-12 italic leading-relaxed text-center">
+                            *การวิเคราะห์คำนวณจากหน่วยไฟที่ใช้ช่วงกลางวันจริง เพื่อลดโอกาสการเกิดไฟฟ้าเหลือทิ้ง (Export) และเพิ่มความคุ้มค่าสูงสุดแก่ผู้ใช้
                         </div>
                     </main>
 
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-slate-100 animate-fade-in">
-                                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-blue-100">
+                            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-slate-100">
+                                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8">
                                     <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 </div>
-                                <h3 className="text-2xl font-black mb-2 text-slate-800">เริ่มการวิเคราะห์เชิงลึก</h3>
-                                <p className="text-slate-500 text-sm mb-10">กรุณาระบุข้อมูลเพื่อเข้าสู่ระบบคำนวณ<br/>Solar Expert ROI (Official)</p>
-                                
+                                <h3 className="text-2xl font-black mb-2 text-slate-800">ยืนยันเพื่อเข้าสู่รายงาน</h3>
+                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อรับผลวิเคราะห์<br/>Energy Behavior ROI Analysis</p>
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="text-left">
-                                        <label className="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-[0.2em]">Installation Province</label>
-                                        <select 
-                                            value={province} 
-                                            onChange={(e) => setProvince(e.target.value)}
-                                            className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer transition-all"
-                                        >
-                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (
-                                                <option key={p} value={p}>{p}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" 
-                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
+                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
                                         value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" 
-                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
+                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
                                         value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
-                                    <button disabled={isLoading}
-                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg`}>
-                                        {isLoading ? 'กำลังประมวลผลข้อมูล...' : 'ดูผลการวิเคราะห์'}
+                                    <button disabled={isLoading} className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg`}>
+                                        {isLoading ? 'กำลังวิเคราะห์...' : 'เข้าสู่หน้าคำนวณ'}
                                     </button>
                                 </form>
                             </div>
