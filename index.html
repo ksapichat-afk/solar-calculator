@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Master - V4.2 (Cash Flow Dashboard)</title>
+    <title>Solar ROI Expert Master - V4.4 (Full Audit)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -15,7 +15,6 @@
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .animate-fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Custom scrollbar for Table */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -107,6 +106,7 @@
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
             const [dayUsage, setDayUsage] = useState(70);
+            const [phase, setPhase] = useState("1");
             const [hasBattery, setHasBattery] = useState(false);
             const [batterySize, setBatterySize] = useState(5);
             const [isRegistered, setIsRegistered] = useState(false);
@@ -118,6 +118,7 @@
             const elecRate = 4.2;
             const batteryCostPerKWh = 13500; 
 
+            // คำนวณขนาด kWp (รวมเผื่อชาร์จแบตถ้าเป็น Hybrid)
             const solarSize = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
@@ -129,16 +130,20 @@
                 }
             }, [bill, sunHours, dayUsage, hasBattery]);
             
+            // คำนวณเงินลงทุน (รวมค่าเฟสไฟฟ้าและแบตเตอรี่)
             const estInvestment = useMemo(() => {
                 const size = parseFloat(solarSize);
                 let pricePerKWp = 45000;
                 if (size >= 3 && size < 5) pricePerKWp = 42000;
                 else if (size >= 5 && size < 10) pricePerKWp = 38000;
                 else if (size >= 10) pricePerKWp = 32000;
+                
                 let solarInvestment = size * pricePerKWp;
+                if (phase === "3") solarInvestment += 15000; // ส่วนต่างราคา 3 Phase
+
                 let batteryInvestment = hasBattery ? batterySize * batteryCostPerKWh : 0;
                 return (solarInvestment + batteryInvestment).toFixed(0);
-            }, [solarSize, hasBattery, batterySize]);
+            }, [solarSize, hasBattery, batterySize, phase]);
 
             const estSaving = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
@@ -173,7 +178,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V4.2|CashFlowDashboard|Hybrid:${hasBattery}`
+                            email: `V4.4|Phase:${phase}|Hybrid:${hasBattery}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -190,22 +195,22 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     <header className="bg-blue-800 p-5 text-white shadow-xl flex justify-between items-center">
-                        <h1 className="text-xl font-bold tracking-tighter">SolarHub Master</h1>
-                        <span className="text-[10px] bg-blue-600 px-2 py-1 rounded font-black uppercase tracking-widest">Dashboard V4.2</span>
+                        <h1 className="text-xl font-bold tracking-tighter">⭐ SolarHub Master</h1>
+                        <span className="text-[10px] bg-blue-600 px-2 py-1 rounded font-black uppercase tracking-widest italic">Full Integrity V4.4</span>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
                         <section className="bg-white rounded-[2rem] shadow-2xl p-6 md:p-10 mb-8 border border-slate-100 animate-fade-in">
                             <div className="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-8">
                                 <div className="space-y-1">
-                                    <label className="font-bold text-slate-700 text-sm ml-1">จังหวัดที่ติดตั้ง (77 จังหวัด):</label>
+                                    <label className="font-bold text-slate-700 text-sm ml-1">1. จังหวัดที่ติดตั้ง:</label>
                                     <select value={province} onChange={(e) => setProvince(e.target.value)}
-                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg cursor-pointer">
+                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg cursor-pointer transition-all">
                                         {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="font-bold text-slate-700 text-sm ml-1">ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
+                                    <label className="font-bold text-slate-700 text-sm ml-1">2. ค่าไฟเฉลี่ยต่อเดือน (บาท):</label>
                                     <div className="relative">
                                         <input type="number" value={bill} onChange={(e) => setBill(e.target.value)}
                                             className="w-full p-4 text-3xl font-black border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none bg-slate-50" />
@@ -213,9 +218,25 @@
                                     </div>
                                 </div>
 
+                                <div className="md:col-span-2 space-y-2 mt-2">
+                                    <label className="font-bold text-slate-700 text-sm ml-1">3. ระบบไฟฟ้าที่ใช้งานหน้างาน:</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button onClick={() => setPhase("1")}
+                                            className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "1" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                            <span className="text-lg">1 Phase</span>
+                                            <span className="text-[10px] opacity-60">สำหรับบ้านพักอาศัยทั่วไป</span>
+                                        </button>
+                                        <button onClick={() => setPhase("3")}
+                                            className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "3" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                            <span className="text-lg">3 Phase</span>
+                                            <span className="text-[10px] opacity-60">สำหรับบ้านใหญ่/ออฟฟิศ</span>
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="md:col-span-2 space-y-4 mt-2 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100">
                                     <label className="block font-bold text-slate-700 text-sm flex justify-between items-center">
-                                        <span>สัดส่วนการใช้ไฟกลางวัน (Load Profile)</span>
+                                        <span>4. สัดส่วนการใช้ไฟกลางวัน (Day Usage Profile)</span>
                                         <span className="text-blue-700 text-2xl font-black">{dayUsage}%</span>
                                     </label>
                                     <input type="range" min="10" max="100" step="5" value={dayUsage} onChange={(e) => setDayUsage(e.target.value)}
@@ -224,7 +245,10 @@
 
                                 <div className="md:col-span-2 p-5 bg-blue-50/50 rounded-[1.5rem] border border-blue-100 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="font-bold text-blue-900 text-sm">ต้องการระบบแบตเตอรี่ (Hybrid System)?</label>
+                                        <label className="font-bold text-blue-900 text-sm flex items-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                            เพิ่มระบบแบตเตอรี่ (Hybrid Option)?
+                                        </label>
                                         <button onClick={() => setHasBattery(!hasBattery)}
                                             className={`w-14 h-8 rounded-full transition-all flex items-center px-1 ${hasBattery ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
                                             <div className="w-6 h-6 bg-white rounded-full shadow-md"></div>
@@ -240,54 +264,56 @@
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm text-center md:text-left">
-                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2">ขนาดแผงแนะนำจริง</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 text-center md:text-left">
+                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-3 opacity-10 text-blue-600 text-4xl">⭐</div>
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest italic">Recommended Size</p>
                                     <div className="flex items-baseline justify-center md:justify-start gap-2">
                                         <span className="text-6xl font-black text-blue-900">{solarSize}</span>
-                                        <span className="text-xl font-bold text-blue-700 uppercase">kWp</span>
+                                        <span className="text-xl font-bold text-blue-700">kWp</span>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left">
-                                    <p className="text-xs font-bold text-emerald-600 uppercase mb-2">ประหยัดรวมรายเดือน</p>
+                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-600 text-4xl">⭐</div>
+                                    <p className="text-xs font-bold text-emerald-600 uppercase mb-2 tracking-widest italic">Monthly Savings</p>
                                     <div className="flex items-baseline justify-center md:justify-start gap-2">
                                         <span className="text-6xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
-                                        <span className="text-xl font-bold text-emerald-700 uppercase">บาท</span>
+                                        <span className="text-xl font-bold text-emerald-700">บาท</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="pt-8 border-t border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">การคืนทุนระยะยาว (ROI Chart)</h3>
+                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">ROI Analysis Dashboard</h3>
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm relative">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
-                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg">ปี</span></p>
+                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg font-bold text-slate-500">ปี</span></p>
                                     </div>
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">ประหยัดสุทธิ 25 ปี</p>
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm relative">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">25-Year Net Profit</p>
                                         <p className="text-emerald-800 text-4xl font-black">
-                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg">฿</span>
+                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg font-bold text-slate-500">฿</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* จุดที่เพิ่ม: Cash Flow Dashboard Table */}
-                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
+                                {/* Cash Flow Dashboard */}
+                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg animate-fade-in">
                                     <div className="bg-slate-800 p-5 text-white flex justify-between items-center">
-                                        <h4 className="font-black text-sm uppercase tracking-widest">Cash Flow Dashboard (25-Year Projection)</h4>
-                                        <span className="text-[10px] bg-slate-700 px-3 py-1 rounded-full text-slate-300">Audited Report</span>
+                                        <h4 className="font-black text-sm uppercase tracking-widest">⭐ Yearly Cash Flow Projection</h4>
+                                        <span className="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
                                     </div>
                                     <div className="overflow-x-auto custom-scrollbar">
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-slate-50 border-b border-slate-100">
                                                 <tr>
                                                     <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ปีที่</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">รายได้ประหยัด/ปี</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดต่อปี</th>
                                                     <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดสะสม</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">สถานะกำไรสุทธิ</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิ</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
@@ -304,39 +330,18 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="bg-slate-50 p-4 text-center text-[10px] text-slate-400 italic">
-                                        *คำนวณหักค่าเสื่อมประสิทธิภาพแผง 0.5% ต่อปี (Linear Degradation)
-                                    </div>
                                 </div>
 
                                 <div className="mt-10 p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-2xl relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-8 opacity-5">
-                                        <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"></path></svg>
-                                    </div>
-                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2">
-                                        <span className="w-8 h-1 bg-blue-400 rounded-full"></span>
-                                        ENGINEERING DATA & PROJECT REFERENCES
-                                    </h4>
-                                    <div className="grid md:grid-cols-2 gap-6 relative z-10">
+                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2 underline underline-offset-8">ENGINEERING DATA REFERENCES</h4>
+                                    <div className="grid md:grid-cols-2 gap-6 relative z-10 text-[11px] text-slate-300 leading-relaxed">
                                         <div className="space-y-4">
-                                            <div>
-                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">CAPEX & Investment</p>
-                                                <p className="text-[11px] text-slate-300 leading-relaxed">คำนวณราคา EPC อ้างอิงปี 2569 สำหรับแผง Tier 1 และ Hybrid Inverter มาตรฐานสากล โดยใช้ระบบ <strong>Economy of Scale</strong></p>
-                                            </div>
-                                            <div>
-                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Energy Production</p>
-                                                <p className="text-[11px] text-slate-300 leading-relaxed">อ้างอิงค่าแดดรายจังหวัด ({sunHours} ชม./วัน) และคำนวณค่าเสื่อมแผง 0.5% ต่อปี ตลอด 25 ปี</p>
-                                            </div>
+                                            <p><strong>Phase System:</strong> คำนวณต้นทุนวัสดุ {phase} Phase ตามมาตรฐานวิศวกรรมไฟฟ้าและความปลอดภัย</p>
+                                            <p><strong>Energy Profile:</strong> อ้างอิงพิกัดแดด 77 จังหวัด ({sunHours} ชม./วัน) และค่าเสื่อมแผงรายปี 0.5%</p>
                                         </div>
                                         <div className="space-y-4">
-                                            <div>
-                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Battery Storage System</p>
-                                                <p className="text-[11px] text-slate-300 leading-relaxed">แบตเตอรี่ LFP คำนวณ DoD ที่ 90% และประสิทธิภาพชาร์จ 95% อายุการใช้งานประมาณ 15 ปี</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Maintenance & Taxation</p>
-                                                <p className="text-[11px] text-slate-300 leading-relaxed">รวมสิทธิลดหย่อนภาษี 200,000 บ. (ตามเกณฑ์ปี 69) ช่วยให้สถานะกำไรสุทธิเป็นบวกได้เร็วกว่าที่ตารางแสดง</p>
-                                            </div>
+                                            <p><strong>Battery Logic:</strong> แบตเตอรี่ LFP คำนวณ DoD 90% และประสิทธิภาพการชาร์จ/ดีสชาร์จ 95%</p>
+                                            <p><strong>Strategy Note:</strong> คำนวณแบบ Conservative (ยังไม่รวมเงินเฟ้อค่าไฟและลดหย่อนภาษี 200,000 บ.)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -345,8 +350,8 @@
 
                         <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
                             <div className="text-center md:text-left">
-                                <h4 className="font-bold text-xl mb-1 text-blue-400">พร้อมเปลี่ยนแสงแดดเป็นรายได้แล้วหรือยัง?</h4>
-                                <p className="text-slate-400 text-sm">ทีมวิศวกรของเราพร้อมออกแบบระบบที่คุ้มค่าที่สุดให้คุณฟรี</p>
+                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจติดตั้งระบบ {phase} Phase หรือรับปรึกษาฟรี?</h4>
+                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมออกแบบระบบที่คุ้มค่าที่สุดให้บ้านคุณ</p>
                             </div>
                             <a href="https://line.me/R/ti/p/~apichatkongsuk" target="_blank"
                                 className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
@@ -356,14 +361,12 @@
                         </div>
                     </main>
 
+                    {/* Login Modal */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
-                                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-blue-100">
-                                    <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                </div>
-                                <h3 className="text-2xl font-black mb-2 text-slate-800">เข้าชมรายงาน ROI (National Edition)</h3>
-                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุจังหวัดและข้อมูลเพื่อเริ่มการวิเคราะห์เชิงลึก<br/>Official SolarHub Expert Report</p>
+                                <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ SolarHub ROI Audit</h3>
+                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเริ่มการวิเคราะห์เชิงลึก<br/>National & Phase-Specific Analysis</p>
                                 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="text-left">
@@ -380,8 +383,8 @@
                                         className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
                                         value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
                                     <button disabled={isLoading}
-                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg`}>
-                                        {isLoading ? 'กำลังวิเคราะห์ข้อมูล...' : 'เริ่มคำนวณ ROI'}
+                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest`}>
+                                        {isLoading ? 'Processing...' : 'Audit ROI Now'}
                                     </button>
                                 </form>
                             </div>
