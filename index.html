@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Master - V4.8 (Absolute Integrity)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
+    <title>Solar ROI Expert Master - V4.9 (Multi-Tariff & Cascading Slider)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
@@ -47,7 +47,7 @@
             "ชัยภูมิ": 4.28, "ชุมพร": 3.90, "เชียงราย": 3.80, "เชียงใหม่": 3.85, "ตรัง": 3.82,
             "ตราด": 3.75, "ตาก": 4.10, "นครนายก": 4.02, "นครปฐม": 4.10, "นครพนม": 4.15,
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
-            "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบบีรีขันธ์": 4.15,
+            "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
             "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
@@ -118,8 +118,9 @@
         const App = () => {
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
+            const [tariffType, setTariffType] = useState("normal"); // ใหม่: normal หรือ tou
             
-            // สัดส่วนโหลดไฟฟ้า 3 ช่วงเวลาหลัก 
+            // สัดส่วนโหลดไฟฟ้า 3 ช่วงเวลาหลัก
             const [dayUsage, setDayUsage] = useState(50);      
             const [eveningUsage, setEveningUsage] = useState(30);  
             const [nightUsage, setNightUsage] = useState(20);    
@@ -133,73 +134,47 @@
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
             const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
-            const elecRate = 4.2;
-            const touOnPeakRate = 5.8; 
             const batteryCostPerKWh = 13500;
 
-            // ตรรกะแปรผันสไลด์บาร์อัตโนมัติ ล็อกผลรวม 100%
+            // อัตราค่าไฟแปรผันตามประเภทมิเตอร์
+            const rates = useMemo(() => {
+                if (tariffType === "tou") {
+                    return { day: 5.8, evening: 5.8, night: 2.6, avg: ((dayUsage * 5.8) + (eveningUsage * 5.8) + (nightUsage * 2.6)) / 100 };
+                }
+                return { day: 4.2, evening: 4.2, night: 4.2, avg: 4.2 };
+            }, [tariffType, dayUsage, eveningUsage, nightUsage]);
+
+            // ใหม่: ระบบสไลด์บาร์ปรับอัตโนมัติ เรียงตามลำดับเวลาลงไป (Cascading Handler)
             const handleDayChange = (val) => {
                 const newDay = Number(val);
-                const remaining = 100 - newDay;
-                const currentLowerSum = eveningUsage + nightUsage;
-                let newEve = 0;
-                let newNight = 0;
-
-                if (currentLowerSum === 0) {
-                    newEve = Math.round(remaining / 2);
-                    newNight = remaining - newEve;
-                } else {
-                    newEve = Math.round((eveningUsage / currentLowerSum) * remaining);
-                    newNight = remaining - newEve;
-                }
                 setDayUsage(newDay);
+                const remaining = 100 - newDay;
+                
+                // บังคับให้สัดส่วนที่เหลือเทไปที่ช่วงหัวค่ำก่อน หากไม่พอก็ค่อยเคลียร์ไปที่ช่วงดึก
+                const newEve = Math.min(eveningUsage, remaining);
                 setEveningUsage(newEve);
-                setNightUsage(newNight);
+                setNightUsage(remaining - newEve);
             };
 
             const handleEveningChange = (val) => {
                 const newEve = Number(val);
-                const remaining = 100 - newEve;
-                const currentLowerSum = dayUsage + nightUsage;
-                let newDay = 0;
-                let newNight = 0;
-
-                if (currentLowerSum === 0) {
-                    newDay = Math.round(remaining / 2);
-                    newNight = remaining - newDay;
-                } else {
-                    newDay = Math.round((dayUsage / currentLowerSum) * remaining);
-                    newNight = remaining - newDay;
-                }
-                setEveningUsage(newEve);
-                setDayUsage(newDay);
-                setNightUsage(newNight);
+                const maxEve = 100 - dayUsage;
+                const finalEve = Math.min(newEve, maxEve);
+                setEveningUsage(finalEve);
+                setNightUsage(100 - dayUsage - finalEve);
             };
 
             const handleNightChange = (val) => {
                 const newNight = Number(val);
-                const remaining = 100 - newNight;
-                const currentLowerSum = dayUsage + eveningUsage;
-                let newDay = 0;
-                let newEve = 0;
-
-                if (currentLowerSum === 0) {
-                    newDay = Math.round(remaining / 2);
-                    newEve = remaining - newDay;
-                } else {
-                    newDay = Math.round((dayUsage / currentLowerSum) * remaining);
-                    newEve = Math.round((eveningUsage / currentLowerSum) * remaining);
-                    const finalSum = newDay + newEve;
-                    if (finalSum !== remaining) newEve += (remaining - finalSum);
-                }
-                setNightUsage(newNight);
-                setDayUsage(newDay);
-                setEveningUsage(newEve);
+                const maxNight = 100 - dayUsage;
+                const finalNight = Math.min(newNight, maxNight);
+                setNightUsage(finalNight);
+                setEveningUsage(100 - dayUsage - finalNight);
             };
 
-            // คำนวณขนาด kWp 
+            // คำนวณขนาด kWp แผงโซล่าเซลล์
             const solarSize = useMemo(() => {
-                const totalUnitsPerMonth = bill / elecRate;
+                const totalUnitsPerMonth = bill / rates.avg;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
                 if (hasBattery) {
                     const dayUnits = unitsNeededPerDay * (dayUsage / 100);
@@ -209,7 +184,7 @@
                     const dayUnits = unitsNeededPerDay * (dayUsage / 100);
                     return (dayUnits / sunHours).toFixed(2);
                 }
-            }, [bill, sunHours, dayUsage, hasBattery, batterySize]);
+            }, [bill, sunHours, dayUsage, hasBattery, batterySize, rates.avg]);
 
             // ค้นหาแพ็กเกจคงที่ของฝ่ายขาย
             const matchedPackage = useMemo(() => {
@@ -228,21 +203,21 @@
 
             // วิเคราะห์รอยต่อช่วงพีคหัวค่ำ 17:00 - 22:00 น.
             const eveningAnalysis = useMemo(() => {
-                const totalUnitsPerMonth = bill / elecRate;
+                const totalUnitsPerMonth = bill / rates.avg;
                 const eveningUnitsPerMonth = totalUnitsPerMonth * (eveningUsage / 100);
-                const eveningCostTOU = eveningUnitsPerMonth * touOnPeakRate; 
+                const eveningCost = eveningUnitsPerMonth * rates.evening; 
                 
                 let batterySavedMoney = 0;
                 let coveragePercent = 0;
                 if (hasBattery) {
                     const maxBatteryOutputPerMonth = batterySize * 0.9 * 30;
                     const coveredUnits = Math.min(eveningUnitsPerMonth, maxBatteryOutputPerMonth);
-                    batterySavedMoney = coveredUnits * touOnPeakRate;
-                    coveragePercent = Math.min(100, ((coveredUnits / eveningUnitsPerMonth) * 100));
+                    batterySavedMoney = coveredUnits * rates.evening;
+                    coveragePercent = Math.min(100, ((coveredUnits / eveningUnitsPerMonth) * 100 || 0));
                 }
 
-                return { eveningCostTOU, batterySavedMoney, coveragePercent };
-            }, [bill, eveningUsage, hasBattery, batterySize]);
+                return { eveningCost, batterySavedMoney, coveragePercent };
+            }, [bill, eveningUsage, hasBattery, batterySize, rates.avg, rates.evening]);
 
             // เงินลงทุนสุทธิ
             const estInvestment = useMemo(() => {
@@ -254,15 +229,15 @@
 
             // ยอดประหยัดรายเดือน
             const estSaving = useMemo(() => {
-                const totalUnitsPerMonth = bill / elecRate;
+                const totalUnitsPerMonth = bill / rates.avg;
                 const dayUnitsPerMonth = totalUnitsPerMonth * (dayUsage / 100);
                 const maxDayProduction = solarSize * sunHours * 30;
                 
-                const daySavings = Math.min(dayUnitsPerMonth, maxDayProduction) * elecRate;
+                const daySavings = Math.min(dayUnitsPerMonth, maxDayProduction) * rates.day;
                 const eveningSavings = eveningAnalysis.batterySavedMoney; 
                 
                 return (daySavings + eveningSavings).toFixed(0);
-            }, [solarSize, sunHours, dayUsage, bill, eveningAnalysis, hasBattery]);
+            }, [solarSize, sunHours, dayUsage, bill, eveningAnalysis, rates.day, rates.avg]);
 
             const cashFlowData = useMemo(() => {
                 const years = Array.from({length: 25}, (_, i) => i + 1);
@@ -285,7 +260,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V4.8|Day:${dayUsage}%|Eve:${eveningUsage}%|Night:${nightUsage}%`
+                            email: `V4.9|Tariff:${tariffType}|Day:${dayUsage}%|Eve:${eveningUsage}%`
                         }),
                         mode: 'no-cors' 
                     });
@@ -303,7 +278,7 @@
                 <div className="min-h-screen flex flex-col">
                     <header className="bg-blue-800 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 className="text-xl font-bold tracking-tighter">⭐ SolarHub Master</h1>
-                        <span className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-black uppercase tracking-widest animate-pulse">Integrity V4.8</span>
+                        <span className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-black uppercase tracking-widest">Fixed Pricing V4.9</span>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -325,8 +300,23 @@
                                     </div>
                                 </div>
 
+                                {/* ใหม่: แยกประเภทลูกค้าตามประเภทมิเตอร์ไฟฟ้า */}
                                 <div className="md:col-span-2 space-y-2 mt-2">
-                                    <label className="font-bold text-slate-700 text-sm ml-1">3. ระบบไฟฟ้าที่ใช้งานหน้างาน:</label>
+                                    <label className="font-bold text-slate-700 text-sm ml-1">3. ประเภทมิเตอร์ไฟฟ้า:</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button type="button" onClick={() => setTariffType("normal")}
+                                            className={`p-4 rounded-2xl border-2 font-bold transition-all ${tariffType === "normal" ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                            อัตราไฟฟ้าปกติ (คงที่)
+                                        </button>
+                                        <button type="button" onClick={() => setTariffType("tou")}
+                                            className={`p-4 rounded-2xl border-2 font-bold transition-all ${tariffType === "tou" ? 'border-orange-600 bg-orange-50 text-orange-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                            อัตราไฟฟ้า TOU (ตามช่วงเวลา)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 space-y-2 mt-2">
+                                    <label className="font-bold text-slate-700 text-sm ml-1">4. ระบบไฟฟ้าที่ใช้งานหน้างาน:</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button type="button" onClick={() => setPhase("1")}
                                             className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "1" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
@@ -339,11 +329,11 @@
                                     </div>
                                 </div>
 
-                                {/* ระบบสไลด์ 3 ทางแปรผันตามกันอัตโนมัติ */}
+                                {/* ปรับปรุง: ระบบสไลด์บาร์ 3 ทางแบบไหลลื่นตามลำดับเวลากลางวัน-เย็น-ดึก */}
                                 <div className="md:col-span-2 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-5">
                                     <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                                        <label className="font-black text-slate-800 text-sm">4. สัดส่วนพฤติกรรมการใช้ไฟแยกตามช่วงเวลา (รวมครบ 100%)</label>
-                                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">Auto-Balanced</span>
+                                        <label className="font-black text-slate-800 text-sm">5. สัดส่วนพฤติกรรมการใช้ไฟแยกตามช่วงเวลา (รวมครบ 100%)</label>
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">Cascading Sliders</span>
                                     </div>
                                     
                                     <div className="space-y-2">
@@ -357,19 +347,19 @@
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold">
-                                            <span className="text-orange-600">🌆 ช่วงหัวค่ำ / On-Peak TOU (17:00 - 22:00 น.)</span>
+                                            <span className="text-orange-600">🌆 ช่วงหัวค่ำ (17:00 - 22:00 น.) - {tariffType === "tou" ? 'On-Peak' : 'เรทปกติ'}</span>
                                             <span className="text-orange-600 text-lg font-black">{eveningUsage}%</span>
                                         </div>
-                                        <input type="range" min="0" max="100" value={eveningUsage} onChange={(e) => handleEveningChange(e.target.value)}
+                                        <input type="range" min="0" max={100 - dayUsage} value={eveningUsage} onChange={(e) => handleEveningChange(e.target.value)}
                                             className="w-full h-2.5 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500" />
                                     </div>
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold">
-                                            <span className="text-purple-600">🌙 ช่วงดึก-เช้าตรู่ / Off-Peak TOU (22:00 - 08:00 น.)</span>
+                                            <span className="text-purple-600">🌙 ช่วงดึก-เช้าตรู่ (22:00 - 08:00 น.) - {tariffType === "tou" ? 'Off-Peak' : 'เรทปกติ'}</span>
                                             <span className="text-purple-600 text-lg font-black">{nightUsage}%</span>
                                         </div>
-                                        <input type="range" min="0" max="100" value={nightUsage} onChange={(e) => handleNightChange(e.target.value)}
+                                        <input type="range" min="0" max={100 - dayUsage} value={nightUsage} onChange={(e) => handleNightChange(e.target.value)}
                                             className="w-full h-2.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500" />
                                     </div>
                                 </div>
@@ -397,177 +387,4 @@
                                     <span className="text-xl mt-0.5">⚠️</span>
                                     <div>
                                         <p className="font-bold text-sm">ข้อแนะนำเชิงวิศวกรรม (Technical Alert):</p>
-                                        <p className="text-xs mt-1 leading-relaxed">ขนาดระบบที่คำนวณได้คือ <strong>{solarSize} kWp</strong> เกินโควตา 1 Phase แนะนำให้เปลี่ยนเป็นระบบ <strong>3 Phase</strong></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* การ์ดวิเคราะห์ช่วงเวลาพีคหัวค่ำ 17:00 - 22:00 น. */}
-                            <div className="mb-8 p-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl text-white shadow-lg space-y-3 border border-slate-700 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-5 text-9xl">⚡</div>
-                                <h4 className="text-orange-400 font-black text-xs uppercase tracking-widest flex items-center gap-1.5">
-                                    ⭐ TOU ON-PEAK ANALYSIS (17:00 - 22:00 น.)
-                                </h4>
-                                <div className="grid md:grid-cols-2 gap-4 pt-1">
-                                    <div>
-                                        <p className="text-slate-400 text-[11px]">มูลค่าค่าไฟจริงในช่วงเวลาพีคหัวค่ำ:</p>
-                                        <p className="text-2xl font-black text-slate-100">{Number(eveningAnalysis.eveningCostTOU).toLocaleString(undefined, {maximumFractionDigits:0})} <span className="text-sm font-bold text-slate-400">บาท/เดือน</span></p>
-                                    </div>
-                                    <div className="flex flex-col justify-center">
-                                        <p className="text-slate-400 text-[11px]">สถานะการประหยัดพลังงาน:</p>
-                                        {!hasBattery ? (
-                                            <p className="text-xs text-orange-400 font-bold mt-1 bg-orange-950/40 p-2 rounded-xl border border-orange-900/40">⚠️ ดึงไฟหลวงเรท On-Peak 100% (แนะระบบ Hybrid เพื่อล็อกต้นทุน)</p>
-                                        ) : (
-                                            <div className="mt-1">
-                                                <p className="text-xs text-emerald-400 font-black">🔋 แบตเตอรี่ช่วยจ่าย {eveningAnalysis.coveragePercent.toFixed(0)}% ของช่วงพีค</p>
-                                                <p className="text-emerald-500 text-[11px] font-medium">เซฟเงินเพิ่มได้ {Number(eveningAnalysis.batterySavedMoney).toLocaleString(undefined, {maximumFractionDigits:0})} บ./เดือน</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center md:text-left">
-                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm relative overflow-hidden">
-                                    <p className="text-xs font-bold text-blue-600 uppercase mb-1 tracking-widest italic">Recommended Size</p>
-                                    <div className="flex items-baseline justify-center md:justify-start gap-2">
-                                        <span className="text-5xl font-black text-blue-900">{solarSize}</span>
-                                        <span className="text-lg font-bold text-blue-700">kWp</span>
-                                    </div>
-                                    {matchedPackage && (
-                                        <div className="mt-3 pt-3 border-t border-slate-100 text-left text-xs text-slate-500 space-y-1">
-                                            <p>📦 <strong>แมตช์คงที่:</strong> {matchedPackage.name}</p>
-                                            <p>☀️ <strong>จำนวนแผง:</strong> {matchedPackage.panels} แผง | 📐 <strong>พื้นที่:</strong> {matchedPackage.area} ตร.ม.</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left flex flex-col justify-between">
-                                    <div>
-                                        <p className="text-xs font-bold text-emerald-600 uppercase mb-1 tracking-widest italic">Net Monthly Savings</p>
-                                        <div className="flex items-baseline justify-center md:justify-start gap-2">
-                                            <span className="text-5xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
-                                            <span className="text-lg font-bold text-emerald-700">บาท</span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 p-3 bg-slate-50 rounded-xl text-left text-xs text-slate-600">
-                                        💰 <strong>ราคาแพ็กเกจติดตั้งสุทธิ:</strong> <span className="font-black text-blue-700 text-sm">{Number(estInvestment).toLocaleString()} บาท</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="pt-8 border-t border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation</h3>
-                                <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
-                                
-                                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
-                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg font-bold text-slate-500">ปี</span></p>
-                                    </div>
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">25-Year Cumulative Profit</p>
-                                        <p className="text-emerald-800 text-4xl font-black">
-                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg font-bold text-slate-500">฿</span>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Cash Flow Table */}
-                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
-                                    <div className="bg-slate-800 p-5 text-white flex justify-between items-center">
-                                        <h4 className="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
-                                        <span className="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
-                                    </div>
-                                    <div className="overflow-x-auto custom-scrollbar">
-                                        <table className="w-full text-left text-sm">
-                                            <thead className="bg-slate-50 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ปีที่</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดต่อปี</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดสะสม</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิสะสม</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50">
-                                                {cashFlowData.map((item) => (
-                                                    <tr key={item.year} className={`hover:bg-slate-50/50 transition-colors ${item.netProfit >= 0 ? 'bg-emerald-50/20' : ''}`}>
-                                                        <td className="px-6 py-4 font-bold text-slate-700">{item.year}</td>
-                                                        <td className="px-6 py-4 text-slate-600 font-medium">{item.yearlySaving.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
-                                                        <td className="px-6 py-4 text-slate-600 font-medium">{item.cumulative.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
-                                                        <td className={`px-6 py-4 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
-                                                            {item.netProfit >= 0 ? '+' : ''}{item.netProfit.toLocaleString(undefined, {maximumFractionDigits:0})} ฿
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div className="mt-10 p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-2xl relative overflow-hidden">
-                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2 underline underline-offset-8">ENGINEERING & PACKAGE REFERENCES</h4>
-                                    <div className="grid md:grid-cols-2 gap-6 relative z-10 text-[11px] text-slate-300 leading-relaxed">
-                                        <div className="space-y-4">
-                                            <p><strong>3-Way Balanced Profile:</strong> ตรรกะกระจายโหลดไฟฟ้าอัตโนมัติ ล็อกผลรวมค่าไฟฟ้าครอบคลุม 24 ชั่วโมงให้ครบ 100% ตลอดเวลา</p>
-                                            <p><strong>Energy Yield Analysis:</strong> ผูกข้อมูลกับพิกัดความเข้มแดดจริงรายจังหวัด ({sunHours} ชม./วัน) หักค่าเสื่อมประสิทธิภาพวัสดุ 0.5% ต่อปี</p>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <p><strong>Hybrid Storage System:</strong> ระบบแบตเตอรี่ LFP บล็อกต้นทุนช่วงหัวค่ำ (17:00 - 22:00 น.) ตามโครงสร้างราคาพลังงานหมุนเวียน</p>
-                                            <p><strong>Note:</strong> คำนวณแบบฐานปลอดภัยที่สุด (ยังไม่รวมเงินเฟ้อค่าไฟฟ้าผันแปรและมาตรการลดหย่อนภาษี 200,000 บาท)</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
-                            <div className="text-center md:text-left">
-                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจจองแพ็กเกจ {matchedPackage?.name} หรือขอใบเสนอราคา?</h4>
-                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมสแกนพื้นที่หน้างานและออกแบบระบบจริงให้ฟรี</p>
-                            </div>
-                            <a href="https://line.me/R/ti/p/~apichatkongsuk" target="_blank"
-                                className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-5 h-5" />
-                                ปรึกษาทาง LINE
-                            </a>
-                        </div>
-                    </main>
-
-                    {/* จุดที่แก้ไขเพิ่มกลับมา: ส่วนของหน้าต่าง Login Gateway (Lead Capture) */}
-                    {showModal && !isRegistered && (
-                        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
-                                <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ SolarHub ROI Audit</h3>
-                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุพิกัดและข้อมูลของคุณเพื่อประมวลผลรายงานแพ็กเกจ<br/>National & Phase-Specific Analysis</p>
-                                
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="text-left">
-                                        <label className="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-[0.2em]">Installation Province</label>
-                                        <select value={province} onChange={(e) => setProvince(e.target.value)}
-                                            className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
-                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
-                                        </select>
-                                    </div>
-                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" 
-                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
-                                        value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" 
-                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
-                                        value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
-                                    <button disabled={isLoading}
-                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest`}>
-                                        {isLoading ? 'Processing...' : 'Audit ROI Now'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                        <p className="text-xs mt-1 leading-relaxed">ขนาดระบบที่คำนวณได้คือ <strong>{solarSize} kWp
