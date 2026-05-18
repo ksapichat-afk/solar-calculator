@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Master - V4.4 (Full Audit)</title>
+    <title>Solar ROI Expert Master - V4.5 (Fixed Package & Alert)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -27,6 +27,20 @@
         const { useState, useMemo, useRef, useEffect } = React;
 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
+
+        // ตารางราคาแพ็กเกจคงที่ของทีม Sale (สามารถแก้ไขตัวเลขราคา จำนวนแผง และพื้นที่ ตรงนี้ได้เลยครับ)
+        const SOLAR_PACKAGES = {
+            "1": [
+                { name: "Package 1P 3kW", maxSize: 3.0, price: 89000, panels: 5, area: 15 }, // อ้างอิงจากไฟล์ Excel จริง
+                { name: "Package 1P 5kW", maxSize: 5.0, price: 139000, panels: 9, area: 27 }
+            ],
+            "3": [
+                { name: "Package 3P 5kW", maxSize: 5.0, price: 149000, panels: 9, area: 27 },
+                { name: "Package 3P 10kW", maxSize: 10.0, price: 239000, panels: 18, area: 54 },
+                { name: "Package 3P 15kW", maxSize: 15.0, price: 329000, panels: 27, area: 81 },
+                { name: "Package 3P 20kW", maxSize: 100.0, price: 429000, panels: 36, area: 108 }
+            ]
+        };
 
         const PROVINCE_SUN_HOURS = {
             "กรุงเทพมหานคร": 4.01, "กระบี่": 3.92, "กาญจนบุรี": 4.25, "กาฬสินธุ์": 4.30, "กำแพงเพชร": 4.18,
@@ -76,7 +90,7 @@
                                 order: 2
                             },
                             {
-                                label: 'เงินลงทุน (บาท)',
+                                label: 'เงินลงทุนสุทธิ (บาท)',
                                 data: Array(25).fill(investment),
                                 borderColor: '#ef4444',
                                 borderWidth: 2,
@@ -118,7 +132,7 @@
             const elecRate = 4.2;
             const batteryCostPerKWh = 13500; 
 
-            // คำนวณขนาด kWp (รวมเผื่อชาร์จแบตถ้าเป็น Hybrid)
+            // คำนวณขนาด kWp พื้นฐานตามปริมาณการใช้ไฟ
             const solarSize = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
@@ -129,21 +143,30 @@
                     return (dayUnits / sunHours).toFixed(2);
                 }
             }, [bill, sunHours, dayUsage, hasBattery]);
-            
-            // คำนวณเงินลงทุน (รวมค่าเฟสไฟฟ้าและแบตเตอรี่)
-            const estInvestment = useMemo(() => {
-                const size = parseFloat(solarSize);
-                let pricePerKWp = 45000;
-                if (size >= 3 && size < 5) pricePerKWp = 42000;
-                else if (size >= 5 && size < 10) pricePerKWp = 38000;
-                else if (size >= 10) pricePerKWp = 32000;
-                
-                let solarInvestment = size * pricePerKWp;
-                if (phase === "3") solarInvestment += 15000; // ส่วนต่างราคา 3 Phase
 
+            // ค้นหา Fixed Package ตามระบบเฟสและขนาด kWp ที่คำนวณได้
+            const matchedPackage = useMemo(() => {
+                const size = parseFloat(solarSize);
+                const packages = SOLAR_PACKAGES[phase] || [];
+                let selected = packages.find(p => size <= p.maxSize);
+                if (!selected && packages.length > 0) {
+                    selected = packages[packages.length - 1]; // ถ้าเกินขนาดสูงสุด ให้ดึงแพ็กเกจบนสุด
+                }
+                return selected;
+            }, [solarSize, phase]);
+            
+            // ตรวจสอบเงื่อนไขแจ้งเตือน Single Phase > 5kWp
+            const isPhaseWarning = useMemo(() => {
+                return phase === "1" && parseFloat(solarSize) > 5.0;
+            }, [phase, solarSize]);
+
+            // คำนวณเงินลงทุนสุทธิ (ราคาแพ็กเกจคงที่ + ค่าแบตเตอรี่ถ้ามี)
+            const estInvestment = useMemo(() => {
+                if (!matchedPackage) return 0;
+                let basePrice = matchedPackage.price;
                 let batteryInvestment = hasBattery ? batterySize * batteryCostPerKWh : 0;
-                return (solarInvestment + batteryInvestment).toFixed(0);
-            }, [solarSize, hasBattery, batterySize, phase]);
+                return (basePrice + batteryInvestment).toFixed(0);
+            }, [matchedPackage, hasBattery, batterySize]);
 
             const estSaving = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
@@ -178,7 +201,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V4.4|Phase:${phase}|Hybrid:${hasBattery}`
+                            email: `V4.5|Pkg:${matchedPackage?.name}|Phase:${phase}|Hybrid:${hasBattery}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -196,7 +219,7 @@
                 <div className="min-h-screen flex flex-col">
                     <header className="bg-blue-800 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 className="text-xl font-bold tracking-tighter">⭐ SolarHub Master</h1>
-                        <span className="text-[10px] bg-blue-600 px-2 py-1 rounded font-black uppercase tracking-widest italic">Full Integrity V4.4</span>
+                        <span className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-black uppercase tracking-widest animate-pulse">Fixed Package V4.5</span>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -224,12 +247,12 @@
                                         <button onClick={() => setPhase("1")}
                                             className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "1" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
                                             <span className="text-lg">1 Phase</span>
-                                            <span className="text-[10px] opacity-60">สำหรับบ้านพักอาศัยทั่วไป</span>
+                                            <span className="text-[10px] opacity-60">ระบบไฟ 220V ทั่วไป</span>
                                         </button>
                                         <button onClick={() => setPhase("3")}
                                             className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "3" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
                                             <span className="text-lg">3 Phase</span>
-                                            <span className="text-[10px] opacity-60">สำหรับบ้านใหญ่/ออฟฟิศ</span>
+                                            <span className="text-[10px] opacity-60">ระบบไฟบ้านใหญ่/อาคารพาณิชย์</span>
                                         </button>
                                     </div>
                                 </div>
@@ -264,46 +287,68 @@
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 text-center md:text-left">
-                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-3 opacity-10 text-blue-600 text-4xl">⭐</div>
-                                    <p className="text-xs font-bold text-blue-600 uppercase mb-2 tracking-widest italic">Recommended Size</p>
-                                    <div className="flex items-baseline justify-center md:justify-start gap-2">
-                                        <span className="text-6xl font-black text-blue-900">{solarSize}</span>
-                                        <span className="text-xl font-bold text-blue-700">kWp</span>
+                            {/* กล่องข้อความแจ้งเตือนสีแดงกรณีติดตั้งเกินโควตา 1 Phase */}
+                            {isPhaseWarning && (
+                                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-700 flex items-start gap-3 animate-fade-in">
+                                    <span className="text-xl mt-0.5">⚠️</span>
+                                    <div>
+                                        <p className="font-bold text-sm">ข้อแนะนำเชิงวิศวกรรม (Technical Alert):</p>
+                                        <p className="text-xs mt-1 leading-relaxed">ขนาดระบบที่คำนวณได้คือ <strong>{solarSize} kWp</strong> ซึ่งเกินโควตาการขนานไฟฟ้าเฟสเดียว (จำกัดไม่เกิน 5.0 kW) แนะนำให้ทีม Sale ติดต่อลูกค้าเพื่อเสนอการขยายเขตหรือปรับปรุงตู้เมนเป็นระบบ <strong>3 Phase</strong> เพื่อความปลอดภัยสูงสุด</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-600 text-4xl">⭐</div>
-                                    <p className="text-xs font-bold text-emerald-600 uppercase mb-2 tracking-widest italic">Monthly Savings</p>
+                            )}
+
+                            {/* รายละเอียดแผงและการประหยัด */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center md:text-left">
+                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm relative overflow-hidden">
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-1 tracking-widest italic">Recommended Size</p>
                                     <div className="flex items-baseline justify-center md:justify-start gap-2">
-                                        <span className="text-6xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
-                                        <span className="text-xl font-bold text-emerald-700">บาท</span>
+                                        <span className="text-5xl font-black text-blue-900">{solarSize}</span>
+                                        <span className="text-lg font-bold text-blue-700">kWp</span>
+                                    </div>
+                                    {matchedPackage && (
+                                        <div className="mt-3 pt-3 border-t border-slate-100 text-left text-xs text-slate-500 space-y-1">
+                                            <p>📦 <strong>แมตช์:</strong> {matchedPackage.name}</p>
+                                            <p>☀️ <strong>จำนวนแผง:</strong> {matchedPackage.panels} แผง (Jinko N-type)</p>
+                                            <p>📐 <strong>พื้นที่หลังคาที่ใช้:</strong> ประมาณ {matchedPackage.area} ตร.ม.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left relative overflow-hidden flex flex-col justify-between">
+                                    <div>
+                                        <p className="text-xs font-bold text-emerald-600 uppercase mb-1 tracking-widest italic">Monthly Savings</p>
+                                        <div className="flex items-baseline justify-center md:justify-start gap-2">
+                                            <span className="text-5xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
+                                            <span className="text-lg font-bold text-emerald-700">บาท</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 p-3 bg-slate-50 rounded-xl text-left text-xs text-slate-600">
+                                        💰 <strong>ราคาแพ็กเกจติดตั้งสุทธิ:</strong> <span className="font-black text-blue-700 text-sm">{Number(estInvestment).toLocaleString()} บาท</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="pt-8 border-t border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">ROI Analysis Dashboard</h3>
+                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation</h3>
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm relative">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
                                         <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg font-bold text-slate-500">ปี</span></p>
                                     </div>
-                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm relative">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">25-Year Net Profit</p>
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">25-Year Cumulative Profit</p>
                                         <p className="text-emerald-800 text-4xl font-black">
                                             {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg font-bold text-slate-500">฿</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Cash Flow Dashboard */}
-                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg animate-fade-in">
+                                {/* Cash Flow Table */}
+                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
                                     <div className="bg-slate-800 p-5 text-white flex justify-between items-center">
-                                        <h4 className="font-black text-sm uppercase tracking-widest">⭐ Yearly Cash Flow Projection</h4>
+                                        <h4 className="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
                                         <span className="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
                                     </div>
                                     <div className="overflow-x-auto custom-scrollbar">
@@ -313,7 +358,7 @@
                                                     <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ปีที่</th>
                                                     <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดต่อปี</th>
                                                     <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดสะสม</th>
-                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิ</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิสะสม</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
@@ -333,15 +378,15 @@
                                 </div>
 
                                 <div className="mt-10 p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-2xl relative overflow-hidden">
-                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2 underline underline-offset-8">ENGINEERING DATA REFERENCES</h4>
+                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2 underline underline-offset-8">ENGINEERING & PACKAGE REFERENCES</h4>
                                     <div className="grid md:grid-cols-2 gap-6 relative z-10 text-[11px] text-slate-300 leading-relaxed">
                                         <div className="space-y-4">
-                                            <p><strong>Phase System:</strong> คำนวณต้นทุนวัสดุ {phase} Phase ตามมาตรฐานวิศวกรรมไฟฟ้าและความปลอดภัย</p>
-                                            <p><strong>Energy Profile:</strong> อ้างอิงพิกัดแดด 77 จังหวัด ({sunHours} ชม./วัน) และค่าเสื่อมแผงรายปี 0.5%</p>
+                                            <p><strong>Fixed Package Strategy:</strong> คำนวณราคาและจำนวนวัสดุแบบคงที่อ้างอิงจากฐานข้อมูลฝ่ายขายปี 2569 เพื่อให้เอกสารหน้าเว็บตรงกับใบเสนอราคาจริง</p>
+                                            <p><strong>Energy Yield Analysis:</strong> ผูกข้อมูลกับพิกัดความเข้มแดดจริงรายจังหวัด ({sunHours} ชม./วัน) หักค่าเสื่อมประสิทธิภาพวัสดุ 0.5% ต่อปี</p>
                                         </div>
                                         <div className="space-y-4">
-                                            <p><strong>Battery Logic:</strong> แบตเตอรี่ LFP คำนวณ DoD 90% และประสิทธิภาพการชาร์จ/ดีสชาร์จ 95%</p>
-                                            <p><strong>Strategy Note:</strong> คำนวณแบบ Conservative (ยังไม่รวมเงินเฟ้อค่าไฟและลดหย่อนภาษี 200,000 บ.)</p>
+                                            <p><strong>Hybrid Storage System:</strong> ระบบแบตเตอรี่ LFP DoD 90% ขยายกำลังผลิตฝั่งแผงเพื่อรองรับกระแสชาร์จในช่วงกลางวันอัตโนมัติ</p>
+                                            <p><strong>Note:</strong> ตัวเลขนี้คำนวณแบบฐานปลอดภัยที่สุด (ยังไม่รวมเงินเฟ้อค่าไฟฟ้าผันแปรและมาตรการลดหย่อนภาษี 200,000 บาท)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -350,8 +395,8 @@
 
                         <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
                             <div className="text-center md:text-left">
-                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจติดตั้งระบบ {phase} Phase หรือรับปรึกษาฟรี?</h4>
-                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมออกแบบระบบที่คุ้มค่าที่สุดให้บ้านคุณ</p>
+                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจจองแพ็กเกจ {matchedPackage?.name} หรือขอใบเสนอราคา?</h4>
+                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมสแกนพื้นที่หน้างานและออกแบบระบบจริงให้ฟรี</p>
                             </div>
                             <a href="https://line.me/R/ti/p/~apichatkongsuk" target="_blank"
                                 className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
@@ -366,7 +411,7 @@
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
                                 <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ SolarHub ROI Audit</h3>
-                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเริ่มการวิเคราะห์เชิงลึก<br/>National & Phase-Specific Analysis</p>
+                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุพิกัดและข้อมูลของคุณเพื่อประมวลผลรายงานแพ็กเกจ<br/>National & Phase-Specific Analysis</p>
                                 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="text-left">
