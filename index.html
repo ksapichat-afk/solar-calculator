@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar ROI Expert Master - V4.7 (Dynamic 3-Way Sliders)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>Solar ROI Expert Master - V4.8 (Absolute Integrity)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
@@ -47,7 +47,7 @@
             "ชัยภูมิ": 4.28, "ชุมพร": 3.90, "เชียงราย": 3.80, "เชียงใหม่": 3.85, "ตรัง": 3.82,
             "ตราด": 3.75, "ตาก": 4.10, "นครนายก": 4.02, "นครปฐม": 4.10, "นครพนม": 4.15,
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
-            "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
+            "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบบีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
             "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
@@ -119,10 +119,10 @@
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
             
-            // ใหม่: สัดส่วนการใช้ไฟ 3 ช่วงเวลาหลัก ผลรวมต้องได้ 100% เสมอ
-            const [dayUsage, setDayUsage] = useState(50);      // 08:00 - 17:00 น.
-            const [eveningUsage, setEveningUsage] = useState(30);  // 17:00 - 22:00 น.
-            const [nightUsage, setNightUsage] = useState(20);    // 22:00 - 08:00 น.
+            // สัดส่วนโหลดไฟฟ้า 3 ช่วงเวลาหลัก 
+            const [dayUsage, setDayUsage] = useState(50);      
+            const [eveningUsage, setEveningUsage] = useState(30);  
+            const [nightUsage, setNightUsage] = useState(20);    
 
             const [phase, setPhase] = useState("1");
             const [hasBattery, setHasBattery] = useState(false);
@@ -137,7 +137,7 @@
             const touOnPeakRate = 5.8; 
             const batteryCostPerKWh = 13500;
 
-            // ตรรกะแปรผันสไลด์บาร์อัตโนมัติ (3-Way Interactive Slider Logic)
+            // ตรรกะแปรผันสไลด์บาร์อัตโนมัติ ล็อกผลรวม 100%
             const handleDayChange = (val) => {
                 const newDay = Number(val);
                 const remaining = 100 - newDay;
@@ -189,7 +189,6 @@
                 } else {
                     newDay = Math.round((dayUsage / currentLowerSum) * remaining);
                     newEve = Math.round((eveningUsage / currentLowerSum) * remaining);
-                    // ป้องกันความคลาดเคลื่อนจากเศษทศนิยม
                     const finalSum = newDay + newEve;
                     if (finalSum !== remaining) newEve += (remaining - finalSum);
                 }
@@ -198,7 +197,7 @@
                 setEveningUsage(newEve);
             };
 
-            // คำนวณขนาด kWp แผงโซล่าเซลล์
+            // คำนวณขนาด kWp 
             const solarSize = useMemo(() => {
                 const totalUnitsPerMonth = bill / elecRate;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
@@ -286,7 +285,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V4.7|Day:${dayUsage}%|Eve:${eveningUsage}%|Night:${nightUsage}%`
+                            email: `V4.8|Day:${dayUsage}%|Eve:${eveningUsage}%|Night:${nightUsage}%`
                         }),
                         mode: 'no-cors' 
                     });
@@ -304,7 +303,7 @@
                 <div className="min-h-screen flex flex-col">
                     <header className="bg-blue-800 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 className="text-xl font-bold tracking-tighter">⭐ SolarHub Master</h1>
-                        <span className="text-[10px] bg-red-600 px-2 py-1 rounded font-black uppercase tracking-widest animate-pulse">3-Way Slider V4.7</span>
+                        <span className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-black uppercase tracking-widest animate-pulse">Integrity V4.8</span>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -329,25 +328,24 @@
                                 <div className="md:col-span-2 space-y-2 mt-2">
                                     <label className="font-bold text-slate-700 text-sm ml-1">3. ระบบไฟฟ้าที่ใช้งานหน้างาน:</label>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => setPhase("1")}
+                                        <button type="button" onClick={() => setPhase("1")}
                                             className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "1" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
                                             <span className="text-lg">1 Phase</span>
                                         </button>
-                                        <button onClick={() => setPhase("3")}
+                                        <button type="button" onClick={() => setPhase("3")}
                                             className={`p-4 rounded-2xl border-2 font-bold transition-all flex flex-col items-center ${phase === "3" ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
                                             <span className="text-lg">3 Phase</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* จุดหลักที่เพิ่มและปรับปรุง: ระบบ 3-Way Slider แปรผันตามกันอัตโนมัติ */}
+                                {/* ระบบสไลด์ 3 ทางแปรผันตามกันอัตโนมัติ */}
                                 <div className="md:col-span-2 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-5">
                                     <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                                         <label className="font-black text-slate-800 text-sm">4. สัดส่วนพฤติกรรมการใช้ไฟแยกตามช่วงเวลา (รวมครบ 100%)</label>
                                         <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">Auto-Balanced</span>
                                     </div>
                                     
-                                    {/* Slider 1: 08:00 - 17:00 น. */}
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold">
                                             <span className="text-slate-600">☀️ ช่วงกลางวัน (08:00 - 17:00 น.)</span>
@@ -357,7 +355,6 @@
                                             className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                                     </div>
 
-                                    {/* Slider 2: 17:00 - 22:00 น. */}
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold">
                                             <span className="text-orange-600">🌆 ช่วงหัวค่ำ / On-Peak TOU (17:00 - 22:00 น.)</span>
@@ -367,7 +364,6 @@
                                             className="w-full h-2.5 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500" />
                                     </div>
 
-                                    {/* Slider 3: 22:00 - 08:00 น. */}
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold">
                                             <span className="text-purple-600">🌙 ช่วงดึก-เช้าตรู่ / Off-Peak TOU (22:00 - 08:00 น.)</span>
@@ -381,7 +377,7 @@
                                 <div className="md:col-span-2 p-5 bg-blue-50/50 rounded-[1.5rem] border border-blue-100 space-y-4">
                                     <div className="flex items-center justify-between">
                                         <label className="font-bold text-blue-900 text-sm">เพิ่มระบบแบตเตอรี่ (Hybrid Option)?</label>
-                                        <button onClick={() => setHasBattery(!hasBattery)}
+                                        <button type="button" onClick={() => setHasBattery(!hasBattery)}
                                             className={`w-14 h-8 rounded-full transition-all flex items-center px-1 ${hasBattery ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
                                             <div className="w-6 h-6 bg-white rounded-full shadow-md"></div>
                                         </button>
@@ -537,7 +533,7 @@
                         </div>
                     </main>
 
-                    {/* Login Modal */}
+                    {/* จุดที่แก้ไขเพิ่มกลับมา: ส่วนของหน้าต่าง Login Gateway (Lead Capture) */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
