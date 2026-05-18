@@ -350,4 +350,146 @@
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center md:text-left">
-                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-
+                                <div className="bg-white p-6 rounded-3xl border-2 border-blue-100 shadow-sm relative overflow-hidden">
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-1 tracking-widest italic">Recommended Size</p>
+                                    <div className="flex items-baseline justify-center md:justify-start gap-2">
+                                        <span className="text-5xl font-black text-blue-900">{solarSize}</span>
+                                        <span className="text-lg font-bold text-blue-700">kWp</span>
+                                    </div>
+                                    {matchedPackage && (
+                                        <div className="mt-3 pt-3 border-t border-slate-100 text-left text-xs text-slate-500 space-y-1">
+                                            <p>📦 <strong>แมตช์คงที่:</strong> {matchedPackage.name}</p>
+                                            <p>☀️ <strong>จำนวนแผง:</strong> {matchedPackage.panels} แผง | 📐 <strong>พื้นที่:</strong> {matchedPackage.area} ตร.ม.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 shadow-sm text-center md:text-left flex flex-col justify-between">
+                                    <div>
+                                        <p className="text-xs font-bold text-emerald-600 uppercase mb-1 tracking-widest italic">Net Monthly Savings</p>
+                                        <div className="flex items-baseline justify-center md:justify-start gap-2">
+                                            <span className="text-5xl font-black text-emerald-900">{Number(estSaving).toLocaleString()}</span>
+                                            <span className="text-lg font-bold text-emerald-700">บาท</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 p-3 bg-slate-50 rounded-xl text-left text-xs text-slate-600">
+                                        💰 <strong>ราคาแพ็กเกจติดตั้งสุทธิ:</strong> <span className="font-black text-blue-700 text-sm">{Number(estInvestment).toLocaleString()} บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-8 border-t border-slate-100">
+                                <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation</h3>
+                                <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
+                                
+                                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
+                                        <p className="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12)).toFixed(1)} <span className="text-lg font-bold text-slate-500">ปี</span></p>
+                                    </div>
+                                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">25-Year Cumulative Profit</p>
+                                        <p className="text-emerald-800 text-4xl font-black">
+                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-lg font-bold text-slate-500">฿</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Cash Flow Table */}
+                                <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
+                                    <div className="bg-slate-800 p-5 text-white flex justify-between items-center">
+                                        <h4 className="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
+                                        <span className="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
+                                    </div>
+                                    <div className="overflow-x-auto custom-scrollbar">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-slate-50 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ปีที่</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดต่อปี</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดสะสม</th>
+                                                    <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิสะสม</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {cashFlowData.map((item) => (
+                                                    <tr key={item.year} className={`hover:bg-slate-50/50 transition-colors ${item.netProfit >= 0 ? 'bg-emerald-50/20' : ''}`}>
+                                                        <td className="px-6 py-4 font-bold text-slate-700">{item.year}</td>
+                                                        <td className="px-6 py-4 text-slate-600 font-medium">{item.yearlySaving.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
+                                                        <td className="px-6 py-4 text-slate-600 font-medium">{item.cumulative.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
+                                                        <td className={`px-6 py-4 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
+                                                            {item.netProfit >= 0 ? '+' : ''}{item.netProfit.toLocaleString(undefined, {maximumFractionDigits:0})} ฿
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="mt-10 p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-2xl relative overflow-hidden">
+                                    <h4 className="text-blue-400 font-black text-lg flex items-center gap-2 underline underline-offset-8">ENGINEERING & PACKAGE REFERENCES</h4>
+                                    <div className="grid md:grid-cols-2 gap-6 relative z-10 text-[11px] text-slate-300 leading-relaxed">
+                                        <div className="space-y-4">
+                                            <p><strong>TOU On-Peak Optimization:</strong> เจาะลึกรอยต่อ 18:00 - 22:00 น. โดยคิดมูลค่าไฟทดแทนที่อัตรา On-Peak 5.8 บ./หน่วย เพื่อความแม่นยำสูงสุดในระบบประเภท Hybrid</p>
+                                            <p><strong>Energy Yield Analysis:</strong> ผูกข้อมูลกับพิกัดความเข้มแดดจริงรายจังหวัด ({sunHours} ชม./วัน) หักค่าเสื่อมประสิทธิภาพวัสดุ 0.5% ต่อปี</p>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <p><strong>Hybrid Storage System:</strong> ระบบแบตเตอรี่ LFP บล็อกต้นทุนช่วงหัวค่ำ และสามารถดึงไฟ Off-Peak มาชาร์จสำรองในช่วงดึกได้</p>
+                                            <p><strong>Note:</strong> คำนวณแบบฐานปลอดภัยที่สุด (ยังไม่รวมเงินเฟ้อค่าไฟฟ้าผันแปรและมาตรการลดหย่อนภาษี 200,000 บาท)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl mb-12">
+                            <div className="text-center md:text-left">
+                                <h4 className="font-bold text-xl mb-1 text-blue-400">สนใจจองแพ็กเกจ {matchedPackage?.name} หรือขอใบเสนอราคา?</h4>
+                                <p className="text-slate-400 text-sm">วิศวกรผู้เชี่ยวชาญพร้อมสแกนพื้นที่หน้างานและออกแบบระบบจริงให้ฟรี</p>
+                            </div>
+                            <a href="https://line.me/R/ti/p/~apichatkongsuk" target="_blank"
+                                className="bg-[#06C755] hover:bg-[#05a346] text-white font-black py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-5 h-5" />
+                                ปรึกษาทาง LINE
+                            </a>
+                        </div>
+                    </main>
+
+                    {/* Login Modal */}
+                    {showModal && !isRegistered && (
+                        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center border border-white/20 animate-fade-in">
+                                <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ SolarHub ROI Audit</h3>
+                                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">ระบุพิกัดและข้อมูลของคุณเพื่อประมวลผลรายงานแพ็กเกจ<br/>National & Phase-Specific Analysis</p>
+                                
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div className="text-left">
+                                        <label className="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-[0.2em]">Installation Province</label>
+                                        <select value={province} onChange={(e) => setProvince(e.target.value)}
+                                            className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
+                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
+                                        </select>
+                                    </div>
+                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" 
+                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
+                                        value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" 
+                                        className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium"
+                                        value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
+                                    <button disabled={isLoading}
+                                        className={`w-full ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest`}>
+                                        {isLoading ? 'Processing...' : 'Audit ROI Now'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
