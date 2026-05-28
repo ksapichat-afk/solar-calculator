@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V5.9.2 (Bespoke Production)</title>
+    <title>TYE Solar ROI Expert Master - V5.9.3 (Refined UI)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -58,7 +58,7 @@
                     { name: "Hybrid Deye 5kW 3P", maxSize: 5.5, kwpSize: 5.5, price: 189000, panels: 10, area: 30 },
                     { name: "Hybrid Solis 10kW 3P", maxSize: 10.2, kwpSize: 8.8, price: 254104, panels: 16, area: 48 },
                     { name: "Hybrid Deye 10kW 3P", maxSize: 11.5, kwpSize: 9.9, price: 289000, panels: 18, area: 54 },
-                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, kwpSize: 12.1, price: 299000, panels: 22, area: 240 },
+                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, kwpSize: 12.1, price: 299000, panels: 22, area: 66 },
                     { name: "Hybrid Deye 15kW 3P", maxSize: 16.0, kwpSize: 11.0, price: 319000, panels: 20, area: 60 },
                     { name: "Hybrid Solis 20kW 3P", maxSize: 22.0, kwpSize: 15.4, price: 406129, panels: 28, area: 84 },
                     { name: "Hybrid Deye 20kW 3P", maxSize: 26.0, kwpSize: 15.4, price: 449000, panels: 28, area: 84 },
@@ -68,7 +68,7 @@
             }
         };
 
-        // 2. ฐานข้อมูลราคาแบตเตอรี่แอดออนรายแบรนด์ (อ้างอิงตรงตามไฟล์ Excelคำนวณราคาล่าสุด)
+        // 2. ฐานข้อมูลราคาแบตเตอรี่แอดออนรายแบรนด์
         const BATTERY_OPTIONS = {
             "Deye (ประกัน 10ปี)": [
                 { cap: "5.12 kWh", price: 33000 },
@@ -242,7 +242,6 @@
                 }
             };
 
-            // 1. ขนาดกิโลวัตต์แนะนำตามสูตรคำนวณทางวิศวกรรมขั้นต่ำ (คงไว้แสดงผลให้ลูกค้าเห็นพฤติกรรมใช้ไฟ)
             const solarSize = useMemo(() => {
                 const currentBill = parseFloat(bill) || 0;
                 const totalUnitsPerMonth = currentBill / rates.avg;
@@ -280,14 +279,12 @@
                 return matchedPackage.price + estBatteryCost;
             }, [matchedPackage, estBatteryCost]);
 
-            // ⭐ ทางเลือกที่ 1: ปรับปรุงสูตรคำนวณผลประหยัดให้อ้างอิงตาม "ขนาดจริงของตัวแพ็กเกจแนะนำ (kwpSize)" 100%
             const estSaving = useMemo(() => {
                 if (!matchedPackage) return 0;
                 const currentBill = parseFloat(bill) || 0;
                 const totalUnitsPerMonth = currentBill / rates.avg;
                 
                 const dayUnitsPerMonth = totalUnitsPerMonth * (dayUsage / 100);
-                // จุดแก้ไข: สลับมาใช้สเปกแผงจริงในตัวโปรโมชั่น (matchedPackage.kwpSize) แทนที่จะโดน Cap ด้วยขนาดแนะนำขั้นต่ำ
                 const maxPackageDayProduction = matchedPackage.kwpSize * sunHours * 30; 
                 
                 const daySavings = Math.min(dayUnitsPerMonth, maxPackageDayProduction) * rates.day;
@@ -328,7 +325,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V5.9.2|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
+                            email: `V5.9.3|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -346,7 +343,7 @@
                 <div class="min-h-screen flex flex-col">
                     <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
-                        <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.2</span>
+                        <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.3</span>
                     </header>
 
                     <main class="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -413,9 +410,10 @@
                                 <div class="md:col-span-2 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-5">
                                     <label class="font-black text-slate-800 text-sm block">6. สัดส่วนพฤติกรรมการใช้ไฟแยกตามช่วงเวลา (รวมครบ 100%)</label>
                                     
+                                    {/* ⭐ ส่วนแก้ไข: ดึงข้อมูลเรทค่าไฟ (บาท/หน่วย) คืนกลับเข้าช่องสไลเดอร์ตามพิกัดจริงเรียบร้อย */}
                                     <div class="space-y-2">
                                         <div class="flex justify-between text-xs font-bold">
-                                            <span class="text-slate-600">☀️ ช่วงกลางวัน (08:00 - 17:00 น.)</span>
+                                            <span class="text-slate-600">☀️ ช่วงกลางวัน (08:00 - 17:00 น.) <span class="ml-1 text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">เรท {rates.day} บ./หน่วย</span></span>
                                             <span class="text-blue-600 text-lg font-black">{dayUsage}%</span>
                                         </div>
                                         <input type="range" min="0" max="100" value={dayUsage} onChange={(e) => handleDayChange(e.target.value)}
@@ -424,7 +422,7 @@
 
                                     <div class="space-y-2">
                                         <div class="flex justify-between text-xs font-bold">
-                                            <span class="text-orange-600">🌆 ช่วงหัวค่ำ (17:00 - 22:00 น.)</span>
+                                            <span class="text-orange-600">🌆 ช่วงหัวค่ำ (17:00 - 22:00 น.) <span class="ml-1 text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">เรท {rates.evening} บ./หน่วย</span></span>
                                             <span class="text-orange-600 text-lg font-black">{eveningUsage}%</span>
                                         </div>
                                         <input type="range" min="0" max="100" value={eveningUsage} onChange={(e) => handleEveningChange(e.target.value)}
@@ -433,7 +431,7 @@
 
                                     <div class="space-y-2">
                                         <div class="flex justify-between text-xs font-bold">
-                                            <span class="text-purple-600">🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.)</span>
+                                            <span class="text-purple-600">🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.) <span class="ml-1 text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">เรท {rates.night} บ./หน่วย</span></span>
                                             <span class="text-purple-600 text-lg font-black">{nightUsage}%</span>
                                         </div>
                                         <input type="range" min="0" max="100" value={nightUsage} onChange={(e) => handleNightChange(e.target.value)}
@@ -480,11 +478,11 @@
                                 </div>
                             )}
 
-                            {/* ⭐ ส่วนแก้ไข: ปรับโฉมบล็อกแจงราคาสุทธิใหม่เป็นสี Slate โทนอ่อน คลีน อ่านง่ายสบายตาตามสั่งการ */}
+                            {/* ⭐ ส่วนแก้ไข: เปลี่ยนหัวข้อยอดไฮไลท์จากตารางแจกแจงราคาเดิม มาเป็น "📦 แพ็กเกจแนะนำ" เรียบร้อยเด่นชัดเจน */}
                             {matchedPackage && (
                                 <div class="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-slate-200 shadow-md text-slate-900 font-sans animate-fade-in">
-                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">
-                                        📋 ตารางแจกแจงราคาสุทธิโครงการ (TOTAL BREAKDOWN RECEIPT)
+                                    <p class="text-xs font-black text-blue-800 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">
+                                        📦 แพ็กเกจแนะนำ (RECOMMENDED COMMERCIAL PACKAGE)
                                     </p>
                                     <div class="space-y-3 text-sm font-semibold">
                                         <div class="flex justify-between items-center text-slate-800">
