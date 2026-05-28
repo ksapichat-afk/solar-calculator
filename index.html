@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V5.9.1 (Fixed Syntax)</title>
+    <title>TYE Solar ROI Expert Master - V5.9.2 (Bespoke Production)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -28,47 +28,47 @@
 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
 
-        // 1. ฐานข้อมูลแพ็กเกจราคาฐานระบบโซล่าเซลล์ (Inverter + แผง JA Solar) *ยังไม่รวมราคาแบตเตอรี่แอดออน
+        // 1. ฐานข้อมูลแพ็กเกจราคาฐานระบบโซล่าเซลล์ (อัปเดตราคาโปรโมชั่นล่าสุดตามไฟล์ฝ่ายขาย)
         const SOLAR_PACKAGES = {
             ongrid: {
                 "1": [
-                    { name: "On-Grid Solis 3kW 1P", maxSize: 3.5, price: 89000, panels: 6, area: 18 },
-                    { name: "On-Grid Solis 5kW 1P", maxSize: 5.5, price: 135000, panels: 10, area: 30 },
-                    { name: "On-Grid Solis 10kW 1P", maxSize: 100.0, price: 215000, panels: 18, area: 54 }
+                    { name: "On-Grid Solis 3kW 1P", maxSize: 3.5, kwpSize: 3.3, price: 89000, panels: 6, area: 18 },
+                    { name: "On-Grid Solis 5kW 1P", maxSize: 5.5, kwpSize: 5.5, price: 135000, panels: 10, area: 30 },
+                    { name: "On-Grid Solis 10kW 1P", maxSize: 100.0, kwpSize: 9.9, price: 215000, panels: 18, area: 54 }
                 ],
                 "3": [
-                    { name: "On-Grid Solis 5kW 3P", maxSize: 5.5, price: 149000, panels: 6, area: 18 },
-                    { name: "On-Grid Solis 10kW 3P", maxSize: 10.5, price: 239000, panels: 18, area: 54 },
-                    { name: "On-Grid Solis 20kW 3P", maxSize: 25.0, price: 409000, panels: 28, area: 84 },
-                    { name: "On-Grid Solis 30kW 3P", maxSize: 100.0, price: 549000, panels: 42, area: 126 }
+                    { name: "On-Grid Solis 5kW 3P", maxSize: 5.5, kwpSize: 3.3, price: 149000, panels: 6, area: 18 },
+                    { name: "On-Grid Solis 10kW 3P", maxSize: 10.5, kwpSize: 9.9, price: 239000, panels: 18, area: 54 },
+                    { name: "On-Grid Solis 20kW 3P", maxSize: 25.0, kwpSize: 15.4, price: 409000, panels: 28, area: 84 },
+                    { name: "On-Grid Solis 30kW 3P", maxSize: 100.0, kwpSize: 23.1, price: 549000, panels: 42, area: 126 }
                 ]
             },
             hybrid: {
                 "1": [
-                    { name: "Hybrid Deye 5kW 1P", maxSize: 5.2, price: 159000, panels: 10, area: 30 },
-                    { name: "Hybrid Deye 6kW 1P", maxSize: 6.2, price: 159000, panels: 10, area: 30 },
-                    { name: "Hybrid Solis 6kW 1P", maxSize: 7.0, price: 165122, panels: 10, area: 30 },
-                    { name: "Hybrid Solis 8kW 1P", maxSize: 8.5, price: 216226, panels: 13, area: 39 },
-                    { name: "Hybrid Deye 10kW 1P", maxSize: 10.2, price: 259000, panels: 18, area: 54 },
-                    { name: "Hybrid Solis 10kW 1P", maxSize: 12.0, price: 269897, panels: 18, area: 54 },
-                    { name: "Hybrid Deye 15kW 1P", maxSize: 15.5, price: 349000, panels: 20, area: 60 },
-                    { name: "Hybrid Solis 16kW 1P", maxSize: 100.0, price: 350917, panels: 22, area: 66 }
+                    { name: "Hybrid Deye 5kW 1P", maxSize: 5.2, kwpSize: 5.5, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Deye 6kW 1P", maxSize: 6.2, kwpSize: 5.5, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 6kW 1P", maxSize: 7.0, kwpSize: 5.5, price: 165122, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 8kW 1P", maxSize: 8.5, kwpSize: 7.15, price: 216226, panels: 13, area: 39 },
+                    { name: "Hybrid Deye 10kW 1P", maxSize: 10.2, kwpSize: 9.9, price: 259000, panels: 18, area: 54 },
+                    { name: "Hybrid Solis 10kW 1P", maxSize: 12.0, kwpSize: 9.9, price: 269897, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 15kW 1P", maxSize: 15.5, kwpSize: 11.0, price: 349000, panels: 20, area: 60 },
+                    { name: "Hybrid Solis 16kW 1P", maxSize: 100.0, kwpSize: 12.1, price: 350917, panels: 22, area: 66 }
                 ],
                 "3": [
-                    { name: "Hybrid Deye 5kW 3P", maxSize: 5.5, price: 189000, panels: 10, area: 30 },
-                    { name: "Hybrid Solis 10kW 3P", maxSize: 10.2, price: 254104, panels: 16, area: 48 },
-                    { name: "Hybrid Deye 10kW 3P", maxSize: 11.5, price: 289000, panels: 18, area: 54 },
-                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, price: 299000, panels: 80, area: 240 },
-                    { name: "Hybrid Deye 15kW 3P", maxSize: 16.0, price: 319000, panels: 20, area: 60 },
-                    { name: "Hybrid Solis 20kW 3P", maxSize: 22.0, price: 406129, panels: 28, area: 84 },
-                    { name: "Hybrid Deye 20kW 3P", maxSize: 26.0, price: 449000, panels: 28, area: 84 },
-                    { name: "Hybrid Deye 30kW 3P", maxSize: 45.0, price: 649000, panels: 24, area: 72 },
-                    { name: "Hybrid Solis 50kW 3P", maxSize: 100.0, price: 955296, panels: 69, area: 207 }
+                    { name: "Hybrid Deye 5kW 3P", maxSize: 5.5, kwpSize: 5.5, price: 189000, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 10kW 3P", maxSize: 10.2, kwpSize: 8.8, price: 254104, panels: 16, area: 48 },
+                    { name: "Hybrid Deye 10kW 3P", maxSize: 11.5, kwpSize: 9.9, price: 289000, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, kwpSize: 12.1, price: 299000, panels: 22, area: 240 },
+                    { name: "Hybrid Deye 15kW 3P", maxSize: 16.0, kwpSize: 11.0, price: 319000, panels: 20, area: 60 },
+                    { name: "Hybrid Solis 20kW 3P", maxSize: 22.0, kwpSize: 15.4, price: 406129, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 20kW 3P", maxSize: 26.0, kwpSize: 15.4, price: 449000, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 30kW 3P", maxSize: 45.0, kwpSize: 13.2, price: 649000, panels: 24, area: 72 },
+                    { name: "Hybrid Solis 50kW 3P", maxSize: 100.0, kwpSize: 37.95, price: 955296, panels: 69, area: 207 }
                 ]
             }
         };
 
-        // 2. ฐานข้อมูลราคาแบตเตอรี่แอดออนรายแบรนด์ อ้างอิงตรงตามไฟล์ Excelคำนวณราคาล่าสุด
+        // 2. ฐานข้อมูลราคาแบตเตอรี่แอดออนรายแบรนด์ (อ้างอิงตรงตามไฟล์ Excelคำนวณราคาล่าสุด)
         const BATTERY_OPTIONS = {
             "Deye (ประกัน 10ปี)": [
                 { cap: "5.12 kWh", price: 33000 },
@@ -242,6 +242,7 @@
                 }
             };
 
+            // 1. ขนาดกิโลวัตต์แนะนำตามสูตรคำนวณทางวิศวกรรมขั้นต่ำ (คงไว้แสดงผลให้ลูกค้าเห็นพฤติกรรมใช้ไฟ)
             const solarSize = useMemo(() => {
                 const currentBill = parseFloat(bill) || 0;
                 const totalUnitsPerMonth = currentBill / rates.avg;
@@ -279,13 +280,17 @@
                 return matchedPackage.price + estBatteryCost;
             }, [matchedPackage, estBatteryCost]);
 
+            // ⭐ ทางเลือกที่ 1: ปรับปรุงสูตรคำนวณผลประหยัดให้อ้างอิงตาม "ขนาดจริงของตัวแพ็กเกจแนะนำ (kwpSize)" 100%
             const estSaving = useMemo(() => {
+                if (!matchedPackage) return 0;
                 const currentBill = parseFloat(bill) || 0;
                 const totalUnitsPerMonth = currentBill / rates.avg;
-                const dayUnitsPerMonth = totalUnitsPerMonth * (dayUsage / 100);
-                const maxDayProduction = solarSize * sunHours * 30;
                 
-                const daySavings = Math.min(dayUnitsPerMonth, maxDayProduction) * rates.day;
+                const dayUnitsPerMonth = totalUnitsPerMonth * (dayUsage / 100);
+                // จุดแก้ไข: สลับมาใช้สเปกแผงจริงในตัวโปรโมชั่น (matchedPackage.kwpSize) แทนที่จะโดน Cap ด้วยขนาดแนะนำขั้นต่ำ
+                const maxPackageDayProduction = matchedPackage.kwpSize * sunHours * 30; 
+                
+                const daySavings = Math.min(dayUnitsPerMonth, maxPackageDayProduction) * rates.day;
                 
                 let eveningSavings = 0;
                 if (systemType === "hybrid") {
@@ -300,7 +305,7 @@
                 }
                 
                 return (daySavings + eveningSavings).toFixed(0);
-            }, [solarSize, sunHours, dayUsage, eveningUsage, bill, systemType, batteryBrand, batteryIndex, rates.day, rates.evening, rates.avg]);
+            }, [matchedPackage, sunHours, dayUsage, eveningUsage, bill, systemType, batteryBrand, batteryIndex, rates.day, rates.evening, rates.avg]);
 
             const cashFlowData = useMemo(() => {
                 const years = Array.from({length: 25}, (_, i) => i + 1);
@@ -323,7 +328,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V5.9.1|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
+                            email: `V5.9.2|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -332,7 +337,7 @@
                 } catch (error) {
                     setIsRegistered(true);
                     setShowModal(false);
-                } finally { // แก้ไขจุดบกพร่องตรงนี้เรียบร้อยครับ (เปลี่ยนจาก fill เป็น finally)
+                } finally { 
                     setIsLoading(false);
                 }
             };
@@ -341,7 +346,7 @@
                 <div class="min-h-screen flex flex-col">
                     <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
-                        <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.1</span>
+                        <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.2</span>
                     </header>
 
                     <main class="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -475,28 +480,29 @@
                                 </div>
                             )}
 
+                            {/* ⭐ ส่วนแก้ไข: ปรับโฉมบล็อกแจงราคาสุทธิใหม่เป็นสี Slate โทนอ่อน คลีน อ่านง่ายสบายตาตามสั่งการ */}
                             {matchedPackage && (
-                                <div class="mb-8 p-6 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl border-2 border-slate-800 shadow-xl text-white font-sans animate-fade-in">
-                                    <p class="text-xs font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-slate-800/80 pb-2 flex items-center gap-2">
-                                        🧾 ตารางแจกแจงราคาสุทธิโครงการ (TOTAL BREAKDOWN RECEIPT)
+                                <div class="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-slate-200 shadow-md text-slate-900 font-sans animate-fade-in">
+                                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">
+                                        📋 ตารางแจกแจงราคาสุทธิโครงการ (TOTAL BREAKDOWN RECEIPT)
                                     </p>
-                                    <div class="space-y-3 text-sm font-medium">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-slate-400">1. {matchedPackage.name} (ราคาฐานระบบแผง + อินเวอร์เตอร์):</span>
-                                            <span class="font-bold text-slate-200">{Number(matchedPackage.price).toLocaleString()} บาท</span>
+                                    <div class="space-y-3 text-sm font-semibold">
+                                        <div class="flex justify-between items-center text-slate-800">
+                                            <span>1. {matchedPackage.name} (ราคาฐานระบบแผง + อินเวอร์เตอร์):</span>
+                                            <span class="font-black text-slate-950 text-base">{Number(matchedPackage.price).toLocaleString()} บาท</span>
                                         </div>
-                                        <div class="text-[11px] text-slate-500 pl-4">
+                                        <div class="text-[11px] text-slate-400 pl-4 font-normal">
                                             * อุปกรณ์ที่บรรจุ: แผง JA Solar จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.
                                         </div>
                                         {systemType === "hybrid" && (
-                                            <div class="flex justify-between items-center text-blue-300 pt-1">
+                                            <div class="flex justify-between items-center text-blue-800 pt-1">
                                                 <span>2. แบตเตอรี่แอดออน {batteryBrand} [{BATTERY_OPTIONS[batteryBrand]?.[batteryIndex]?.cap || ''}]:</span>
-                                                <span class="font-bold">+{Number(estBatteryCost).toLocaleString()} บาท</span>
+                                                <span class="font-black">+{Number(estBatteryCost).toLocaleString()} บาท</span>
                                             </div>
                                         )}
-                                        <div class="border-t border-dashed border-slate-700 pt-4 flex justify-between items-baseline font-black">
-                                            <span class="text-amber-400 text-base">🔥 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
-                                            <span class="text-emerald-400 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span class="text-xs text-slate-400 font-bold">บาท</span></span>
+                                        <div class="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
+                                            <span class="text-slate-700 text-sm md:text-base">💰 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
+                                            <span class="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span class="text-xs text-slate-500 font-bold">บาท</span></span>
                                         </div>
                                     </div>
                                 </div>
