@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V5.8.1 (Bespoke Production)</title>
+    <title>TYE Solar ROI Expert Master - V5.9 (Bespoke Production)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -28,44 +28,76 @@
 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
 
-        // ฐานข้อมูลราคาระบบเวอร์ชันโปรโมชั่น V5.8.1 อ้างอิงตรงตามไฟล์ฝ่ายขายคำนวณล่าสุด
+        // 1. ฐานข้อมูลแพ็กเกจราคาฐานระบบโชล่าเซลล์ (Inverter + แผง JA Solar) *ยังไม่รวมราคาแบตเตอรี่แอดออน
         const SOLAR_PACKAGES = {
             ongrid: {
                 "1": [
                     { name: "On-Grid Solis 3kW 1P", maxSize: 3.5, price: 89000, panels: 6, area: 18 },
                     { name: "On-Grid Solis 5kW 1P", maxSize: 5.5, price: 135000, panels: 10, area: 30 },
-                    { name: "On-Grid Solis 10kW 1P", maxSize: 10.5, price: 215000, panels: 18, area: 54 }
+                    { name: "On-Grid Solis 10kW 1P", maxSize: 100.0, price: 215000, panels: 18, area: 54 }
                 ],
                 "3": [
                     { name: "On-Grid Solis 5kW 3P", maxSize: 5.5, price: 149000, panels: 6, area: 18 },
                     { name: "On-Grid Solis 10kW 3P", maxSize: 10.5, price: 239000, panels: 18, area: 54 },
-                    { name: "On-Grid Solis 20kW 3P", maxSize: 20.5, price: 409000, panels: 28, area: 84 },
+                    { name: "On-Grid Solis 20kW 3P", maxSize: 25.0, price: 409000, panels: 28, area: 84 },
                     { name: "On-Grid Solis 30kW 3P", maxSize: 100.0, price: 549000, panels: 42, area: 126 }
                 ]
             },
             hybrid: {
                 "1": [
-                    { name: "Hybrid Deye 5kW 1P", maxSize: 5.0, price: 159000, panels: 10, area: 30 },
-                    { name: "Hybrid Deye 6kW 1P", maxSize: 6.0, price: 159000, panels: 10, area: 30 },
-                    { name: "Hybrid Solis 6kW 1P", maxSize: 6.5, price: 165122, panels: 10, area: 30 },
+                    { name: "Hybrid Deye 5kW 1P", maxSize: 5.2, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Deye 6kW 1P", maxSize: 6.2, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 6kW 1P", maxSize: 7.0, price: 165122, panels: 10, area: 30 },
                     { name: "Hybrid Solis 8kW 1P", maxSize: 8.5, price: 216226, panels: 13, area: 39 },
-                    { name: "Hybrid Deye 10kW 1P", maxSize: 10.0, price: 259000, panels: 18, area: 54 },
-                    { name: "Hybrid Solis 10kW 1P", maxSize: 10.5, price: 269897, panels: 18, area: 54 },
-                    { name: "Hybrid Deye 15kW 1P", maxSize: 15.0, price: 349000, panels: 20, area: 60 },
+                    { name: "Hybrid Deye 10kW 1P", maxSize: 10.2, price: 259000, panels: 18, area: 54 },
+                    { name: "Hybrid Solis 10kW 1P", maxSize: 12.0, price: 269897, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 15kW 1P", maxSize: 15.5, price: 349000, panels: 20, area: 60 },
                     { name: "Hybrid Solis 16kW 1P", maxSize: 100.0, price: 350917, panels: 22, area: 66 }
                 ],
                 "3": [
                     { name: "Hybrid Deye 5kW 3P", maxSize: 5.5, price: 189000, panels: 10, area: 30 },
-                    { name: "Hybrid Solis 10kW 3P", maxSize: 10.0, price: 254104, panels: 16, area: 48 },
-                    { name: "Hybrid Deye 10kW 3P", maxSize: 10.5, price: 289000, panels: 18, area: 54 },
-                    { name: "Hybrid Deye 12kW 3P", maxSize: 12.5, price: 299000, panels: 22, area: 66 },
-                    { name: "Hybrid Deye 15kW 3P", maxSize: 15.5, price: 319000, panels: 20, area: 60 },
-                    { name: "Hybrid Solis 20kW 3P", maxSize: 20.0, price: 406129, panels: 28, area: 84 },
-                    { name: "Hybrid Deye 20kW 3P", maxSize: 20.5, price: 449000, panels: 28, area: 84 },
-                    { name: "Hybrid Deye 30kW 3P", maxSize: 35.0, price: 649000, panels: 24, area: 72 },
+                    { name: "Hybrid Solis 10kW 3P", maxSize: 10.2, price: 254104, panels: 16, area: 48 },
+                    { name: "Hybrid Deye 10kW 3P", maxSize: 11.5, price: 289000, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, price: 299000, panels: 80, area: 240 },
+                    { name: "Hybrid Deye 15kW 3P", maxSize: 16.0, price: 319000, panels: 20, area: 60 },
+                    { name: "Hybrid Solis 20kW 3P", maxSize: 22.0, price: 406129, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 20kW 3P", maxSize: 26.0, price: 449000, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 30kW 3P", maxSize: 45.0, price: 649000, panels: 24, area: 72 },
                     { name: "Hybrid Solis 50kW 3P", maxSize: 100.0, price: 955296, panels: 69, area: 207 }
                 ]
             }
+        };
+
+        // 2. ฐานข้อมูลราคาแบตเตอรี่แอดออนรายแบรนด์ อ้างอิงตรงตามไฟล์ Excelคำนวณราคาล่าสุด
+        const BATTERY_OPTIONS = {
+            "Deye (ประกัน 10ปี)": [
+                { cap: "5.12 kWh", price: 33000 },
+                { cap: "10.00 kWh", price: 61000 },
+                { cap: "16.00 kWh", price: 84000 }
+            ],
+            "LVTOPSUN (ประกัน 7ปี)": [
+                { cap: "5.12 kWh", price: 33000 },
+                { cap: "10.00 kWh", price: 53000 },
+                { cap: "16.00 kWh", price: 60000 }
+            ],
+            "Pylontech (ประกัน 10ปี)": [
+                { cap: "5.12 kWh", price: 29000 },
+                { cap: "16.00 kWh", price: 69000 }
+            ],
+            "Dyness (ประกัน 10ปี)": [
+                { cap: "5.12 kWh", price: 32000 },
+                { cap: "16.00 kWh", price: 74000 }
+            ],
+            "BETA+ (ประกัน 10ปี)": [
+                { cap: "5.12 kWh", price: 59000 },
+                { cap: "7.06 kWh", price: 84000 },
+                { cap: "16.00 kWh", price: 120000 }
+            ],
+            "Eenovance (ประกัน 10ปี)": [
+                { cap: "5.12 kWh", price: 37000 },
+                { cap: "10.24 kWh", price: 68000 },
+                { cap: "15.36 kWh", price: 93000 }
+            ]
         };
 
         const PROVINCE_SUN_HOURS = {
@@ -76,7 +108,7 @@
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
             "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
-            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
+            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
             "ยโสธร": 4.28, "ยะลา": 3.78, "ร้อยเอ็ด": 4.26, "ระนอง": 3.70, "ระยอง": 4.10,
             "ราชบุรี": 4.15, "ลพบุรี": 4.22, "ลำปาง": 3.88, "ลำพูน": 3.86, "เลย": 4.05,
@@ -117,7 +149,7 @@
                                 order: 2
                             },
                             {
-                                label: 'เงินลงทุนโปรโมชั่น (บาท)',
+                                label: 'เงินลงทุนรวมทั้งโครงการ (บาท)',
                                 data: Array(25).fill(investment),
                                 borderColor: '#ef4444',
                                 borderWidth: 2,
@@ -154,12 +186,22 @@
             const [nightUsage, setNightUsage] = useState(20);    
 
             const [phase, setPhase] = useState("1");
+            
+            // สเตทสำหรับระบบ Interactive 2 ระดับของตัวเลือกแบตเตอรี่แอดออน
+            const [batteryBrand, setBatteryBrand] = useState("Deye (ประกัน 10ปี)");
+            const [batteryIndex, setBatteryIndex] = useState(0);
+
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
             const sunHours = PROVINCE_SUN_HOURS[province] || 4.0;
+
+            // รีเซ็ตดัชนีขนาดความจุแบตเตอรี่อัตโนมัติหากเปลี่ยนแบรนด์ เพื่อป้องกันโค้ดพังหลุดกรอบอาร์เรย์
+            useEffect(() => {
+                setBatteryIndex(0);
+            }, [batteryBrand]);
 
             const rates = useMemo(() => {
                 if (tariffType === "tou") {
@@ -227,10 +269,19 @@
                 return phase === "1" && parseFloat(solarSize) > 5.5;
             }, [phase, solarSize]);
 
+            // คำนวณราคาแบตเตอรี่แอดออนย่อยตามที่เลือกจริง
+            const estBatteryCost = useMemo(() => {
+                if (systemType !== "hybrid") return 0;
+                const brandGroup = BATTERY_OPTIONS[batteryBrand] || [];
+                const currentSelection = brandGroup[batteryIndex] || { price: 0 };
+                return currentSelection.price;
+            }, [systemType, batteryBrand, batteryIndex]);
+
+            // เงินลงทุนรวมทั้งโครงการ = [ราคาฐานระบบ] + [ราคาแบตเตอรี่แอดออน]
             const estInvestment = useMemo(() => {
                 if (!matchedPackage) return 0;
-                return matchedPackage.price;
-            }, [matchedPackage]);
+                return matchedPackage.price + estBatteryCost;
+            }, [matchedPackage, estBatteryCost]);
 
             const estSaving = useMemo(() => {
                 const currentBill = parseFloat(bill) || 0;
@@ -239,10 +290,21 @@
                 const maxDayProduction = solarSize * sunHours * 30;
                 
                 const daySavings = Math.min(dayUnitsPerMonth, maxDayProduction) * rates.day;
-                const eveningSavings = systemType === "hybrid" ? (totalUnitsPerMonth * (eveningUsage / 100) * 0.8) * rates.evening : 0;
+                
+                let eveningSavings = 0;
+                if (systemType === "hybrid") {
+                    const brandGroup = BATTERY_OPTIONS[batteryBrand] || [];
+                    const currentSelection = brandGroup[batteryIndex] || { cap: "0 kWh" };
+                    const battCapacity = parseFloat(currentSelection.cap) || 0;
+                    
+                    const maxBatteryOutputPerMonth = battCapacity * 0.8 * 30; // คิดบนฐานปลอดภัย DoD 80%
+                    const eveningUnitsPerMonth = totalUnitsPerMonth * (eveningUsage / 100);
+                    
+                    eveningSavings = Math.min(eveningUnitsPerMonth, maxBatteryOutputPerMonth) * rates.evening;
+                }
                 
                 return (daySavings + eveningSavings).toFixed(0);
-            }, [solarSize, sunHours, dayUsage, eveningUsage, bill, systemType, rates.day, rates.evening, rates.avg]);
+            }, [solarSize, sunHours, dayUsage, eveningUsage, bill, systemType, batteryBrand, batteryIndex, rates.day, rates.evening, rates.avg]);
 
             const cashFlowData = useMemo(() => {
                 const years = Array.from({length: 25}, (_, i) => i + 1);
@@ -265,7 +327,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V5.8.1|Type:${systemType}|Tariff:${tariffType}`
+                            email: `V5.9|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -274,7 +336,7 @@
                 } catch (error) {
                     setIsRegistered(true);
                     setShowModal(false);
-                } finally {
+                } fill {
                     setIsLoading(false);
                 }
             };
@@ -283,7 +345,7 @@
                 <div class="min-h-screen flex flex-col">
                     <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
-                        <span class="text-[10px] bg-emerald-600 px-3 py-1 rounded font-black uppercase tracking-widest">Promotion V5.8.1</span>
+                        <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9</span>
                     </header>
 
                     <main class="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -310,7 +372,7 @@
                                     <div class="grid grid-cols-2 gap-4">
                                         <button type="button" onClick={() => setSystemType("hybrid")}
                                             class={`p-4 rounded-2xl border-2 font-bold transition-all ${systemType === "hybrid" ? 'border-blue-800 bg-blue-50 text-blue-900 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-                                            🔋 Hybrid System (พร้อมแบตเตอรี่)
+                                            🔋 Hybrid System (ต้องเลือกแบตเตอรี่เพิ่ม)
                                         </button>
                                         <button type="button" onClick={() => setSystemType("ongrid")}
                                             class={`p-4 rounded-2xl border-2 font-bold transition-all ${systemType === "ongrid" ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-md' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
@@ -377,6 +439,35 @@
                                             class="w-full h-2.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500" />
                                     </div>
                                 </div>
+
+                                {/* ระดับที่ 1 และ 2 ของระบบเลือกแบตเตอรี่แอดออน (UX สองระดับป้องกันลูกค้าสับสน) */}
+                                {systemType === "hybrid" && (
+                                    <div class="md:col-span-2 p-6 bg-blue-50/60 rounded-[2rem] border border-blue-100 space-y-4 animate-fade-in">
+                                        <div>
+                                            <label class="font-black text-blue-950 text-sm block mb-2">🔋 เลือกระดับที่ 1: แบรนด์แบตเตอรี่และการรับประกัน</label>
+                                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                {Object.keys(BATTERY_OPTIONS).map((b) => (
+                                                    <button type="button" key={b} onClick={() => setBatteryBrand(b)}
+                                                        class={`p-3 text-xs rounded-xl border-2 font-bold transition-all text-center ${batteryBrand === b ? 'border-blue-800 bg-blue-900 text-white shadow-md' : 'border-slate-200 bg-white text-slate-500'}`}>
+                                                        {b}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="font-black text-blue-950 text-sm block mb-2">⚡ เลือกระดับที่ 2: ขนาดความจุสำรอง (kWh) สำหรับช่วงค่ำ</label>
+                                            <div class="grid grid-cols-3 gap-2">
+                                                {(BATTERY_OPTIONS[batteryBrand] || []).map((opt, idx) => (
+                                                    <button type="button" key={idx} onClick={() => setBatteryIndex(idx)}
+                                                        class={`p-3 text-sm rounded-xl border-2 font-black transition-all flex flex-col items-center justify-center ${batteryIndex === idx ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-md' : 'border-slate-200 bg-white text-slate-400'}`}>
+                                                        <span>{opt.cap}</span>
+                                                        <span class="text-[10px] font-bold text-slate-400 mt-1">+{opt.price.toLocaleString()} บ.</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {isPhaseWarning && (
@@ -389,23 +480,29 @@
                                 </div>
                             )}
 
+                            {/* มิติใหม่ V5.9: บล็อกแจกแจงแบบใบเสร็จซูเปอร์มาร์เก็ต มีความโปร่งใส ลูกค้าประทับใจแน่นอน */}
                             {matchedPackage && (
-                                <div class="mb-8 p-6 bg-gradient-to-br from-blue-900 to-indigo-950 rounded-3xl border-2 border-blue-800 shadow-xl text-white animate-fade-in">
-                                    <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">
-                                        📦 แพ็กเกจโปรโมชั่นแนะนำ (ASSIGNED COMMERCIAL PACKAGE)
+                                <div class="mb-8 p-6 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl border-2 border-slate-800 shadow-xl text-white font-sans animate-fade-in">
+                                    <p class="text-xs font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-slate-800/80 pb-2 flex items-center gap-2">
+                                        🧾 ตารางแจกแจงราคาสุทธิโครงการ (TOTAL BREAKDOWN RECEIPT)
                                     </p>
-                                    <div class="grid md:grid-cols-3 gap-6 items-center">
-                                        <div>
-                                            <p class="text-slate-400 text-[9px] font-bold uppercase">PRODUCT MODEL</p>
-                                            <p class="text-2xl font-black text-blue-100 tracking-tight">{matchedPackage.name}</p>
+                                    <div class="space-y-3 text-sm font-medium">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-400">1. {matchedPackage.name} (ราคาฐานระบบแผง + อินเวอร์เตอร์):</span>
+                                            <span class="font-bold text-slate-200">{Number(matchedPackage.price).toLocaleString()} บาท</span>
                                         </div>
-                                        <div class="flex flex-col gap-1 border-y md:border-y-0 md:border-x border-blue-800 py-3 md:py-0 md:px-6 text-xs font-bold text-slate-300">
-                                            <p>☀️ จำนวนแผง: <span class="text-emerald-400 font-black">{matchedPackage.panels} แผง</span></p>
-                                            <p>📐 พื้นที่ติดตั้ง: <span class="text-emerald-400 font-black">{matchedPackage.area} ตร.ม.</span></p>
+                                        <div class="text-[11px] text-slate-500 pl-4">
+                                            * อุปกรณ์ที่บรรจุ: แผง JA Solar จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.
                                         </div>
-                                        <div class="text-center md:text-right">
-                                            <p class="text-slate-400 text-[9px] font-bold uppercase">PROMOTION PRICE (NET)</p>
-                                            <p class="text-3xl font-black text-amber-400 tracking-tight">{Number(matchedPackage.price).toLocaleString()} <span class="text-sm font-bold text-slate-300">บาท</span></p>
+                                        {systemType === "hybrid" && (
+                                            <div class="flex justify-between items-center text-blue-300 pt-1">
+                                                <span>2. แบตเตอรี่แอดออน {batteryBrand} [{BATTERY_OPTIONS[batteryBrand][batteryIndex]?.cap}]:</span>
+                                                <span class="font-bold">+{Number(estBatteryCost).toLocaleString()} บาท</span>
+                                            </div>
+                                        )}
+                                        <div class="border-t border-dashed border-slate-700 pt-4 flex justify-between items-baseline font-black">
+                                            <span class="text-amber-400 text-base">🔥 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
+                                            <span class="text-emerald-400 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span class="text-xs text-slate-400 font-bold">บาท</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -434,7 +531,7 @@
                                 <h3 class="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation</h3>
                                 <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
                                 
-                                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center mt-8">
                                     <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
                                         <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Payback Period</p>
                                         <p class="text-orange-600 text-4xl font-black">{(estInvestment / (estSaving * 12 || 1)).toFixed(1)} <span class="text-lg font-bold text-slate-500">ปี</span></p>
@@ -447,8 +544,8 @@
                                     </div>
                                 </div>
 
-                                {/* ⭐ ส่วนแก้ไข: ดึงตาราง Cash Flow Dashboard กลับเข้ามาแสดงผลเรียบร้อยครบถ้วน */}
-                                <div class="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
+                                {/* ตารางประมาณการละเอียด 25 ปี ล็อกจุดกลับมาฉายแสงสมบูรณ์แบบเพื่อเอาใจลูกค้าปิดการขาย */}
+                                <div class="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg animate-fade-in">
                                     <div class="bg-slate-800 p-5 text-white flex justify-between items-center">
                                         <h4 class="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
                                         <span class="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
@@ -481,7 +578,7 @@
                             </div>
                         </section>
 
-                        <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12">
+                        <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12 animate-fade-in">
                             <div class="border-b border-slate-800 pb-4 text-center md:text-left">
                                 <h4 class="font-bold text-xl text-amber-400">⚡ สนใจขอเสนอราคาโปรโมชั่นพิเศษหรือนัดสำรวจหน้างาน</h4>
                                 <p class="text-slate-400 text-sm mt-1">ทีมงานวิศวกร TYE Solar พร้อมดูแลออกแบบระบบและคำนวณจุดคุ้มทุนจริงหน้างานให้ฟรี</p>
@@ -510,7 +607,7 @@
 
                     {showModal && !isRegistered && (
                         <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-                            <div class="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center animate-fade-in">
+                            <div class="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
                                 <h3 class="text-2xl font-black mb-2 text-slate-800 italic">⭐ TYE Solar Audit</h3>
                                 <p class="text-slate-500 text-sm mb-8 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเข้าใช้งานระบบประมวลผลคำนวณจุดคุ้มทุน</p>
                                 
