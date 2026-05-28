@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V5.8 (Promotion Edition)</title>
+    <title>TYE Solar ROI Expert Master - V5.8.1 (Bespoke Production)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -28,7 +28,7 @@
 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
 
-        // ฐานข้อมูลราคาระบบเวอร์ชันโปรโมชั่น V5.8 อ้างอิงตรงตามไฟล์ฝ่ายขายคำนวณล่าสุด
+        // ฐานข้อมูลราคาระบบเวอร์ชันโปรโมชั่น V5.8.1 อ้างอิงตรงตามไฟล์ฝ่ายขายคำนวณล่าสุด
         const SOLAR_PACKAGES = {
             ongrid: {
                 "1": [
@@ -76,7 +76,7 @@
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
             "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
-            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
+            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
             "ยโสธร": 4.28, "ยะลา": 3.78, "ร้อยเอ็ด": 4.26, "ระนอง": 3.70, "ระยอง": 4.10,
             "ราชบุรี": 4.15, "ลพบุรี": 4.22, "ลำปาง": 3.88, "ลำพูน": 3.86, "เลย": 4.05,
@@ -147,7 +147,7 @@
             const [bill, setBill] = useState(5000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
             const [tariffType, setTariffType] = useState("normal"); 
-            const [systemType, setSystemType] = useState("hybrid"); // ใหม่: เลือกระหว่าง ongrid / hybrid โดยตรง
+            const [systemType, setSystemType] = useState("hybrid"); 
             
             const [dayUsage, setDayUsage] = useState(50);      
             const [eveningUsage, setEveningUsage] = useState(30);  
@@ -207,7 +207,6 @@
                 const totalUnitsPerMonth = currentBill / rates.avg;
                 const unitsNeededPerDay = totalUnitsPerMonth / 30;
                 
-                // สำหรับ Hybrid คิดชดเชยการประหยัดไฟช่วงค่ำเพิ่มเติมด้วยแบตเตอรี่
                 const factor = systemType === "hybrid" ? (dayUsage + (eveningUsage * 0.7)) / 100 : dayUsage / 100;
                 const dayUnits = unitsNeededPerDay * factor;
                 return (dayUnits / sunHours).toFixed(2);
@@ -240,8 +239,6 @@
                 const maxDayProduction = solarSize * sunHours * 30;
                 
                 const daySavings = Math.min(dayUnitsPerMonth, maxDayProduction) * rates.day;
-                
-                // ถ้าระบบเป็น Hybrid จะคำนวณผลประหยัดดักเก็บไฟช่วงหัวค่ำเพิ่มอีก 25%
                 const eveningSavings = systemType === "hybrid" ? (totalUnitsPerMonth * (eveningUsage / 100) * 0.8) * rates.evening : 0;
                 
                 return (daySavings + eveningSavings).toFixed(0);
@@ -268,7 +265,7 @@
                             name: formData.name,
                             message: formData.tel,
                             province: province,
-                            email: `V5.8|Type:${systemType}|Tariff:${tariffType}`
+                            email: `V5.8.1|Type:${systemType}|Tariff:${tariffType}`
                         }),
                         mode: 'no-cors' 
                     });
@@ -286,7 +283,7 @@
                 <div class="min-h-screen flex flex-col">
                     <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                         <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
-                        <span class="text-[10px] bg-emerald-600 px-3 py-1 rounded font-black uppercase tracking-widest">Promotion V5.8</span>
+                        <span class="text-[10px] bg-emerald-600 px-3 py-1 rounded font-black uppercase tracking-widest">Promotion V5.8.1</span>
                     </header>
 
                     <main class="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
@@ -392,7 +389,6 @@
                                 </div>
                             )}
 
-                            {/* จัดรูปแบบกล่องแนะนำแพ็กเกจใหม่ ใหญ่ เด่นชัด ตามความต้องการของฝ่ายบริหาร */}
                             {matchedPackage && (
                                 <div class="mb-8 p-6 bg-gradient-to-br from-blue-900 to-indigo-950 rounded-3xl border-2 border-blue-800 shadow-xl text-white animate-fade-in">
                                     <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">
@@ -450,10 +446,41 @@
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* ⭐ ส่วนแก้ไข: ดึงตาราง Cash Flow Dashboard กลับเข้ามาแสดงผลเรียบร้อยครบถ้วน */}
+                                <div class="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
+                                    <div class="bg-slate-800 p-5 text-white flex justify-between items-center">
+                                        <h4 class="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
+                                        <span class="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
+                                    </div>
+                                    <div class="overflow-x-auto custom-scrollbar">
+                                        <table class="w-full text-left text-sm">
+                                            <thead class="bg-slate-50 border-b border-slate-100">
+                                                <tr>
+                                                    <th class="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ปีที่</th>
+                                                    <th class="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดต่อปี</th>
+                                                    <th class="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">ประหยัดสะสม</th>
+                                                    <th class="px-6 py-4 font-bold text-slate-500 uppercase text-[10px]">กำไรสุทธิสะสมหลังหักทุน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-50">
+                                                {cashFlowData.map((item) => (
+                                                    <tr key={item.year} class={`hover:bg-slate-50/50 transition-colors ${item.netProfit >= 0 ? 'bg-emerald-50/20' : ''}`}>
+                                                        <td class="px-6 py-4 font-bold text-slate-700">{item.year}</td>
+                                                        <td class="px-6 py-4 text-slate-600 font-medium">{item.yearlySaving.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
+                                                        <td class="px-6 py-4 text-slate-600 font-medium">{item.cumulative.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
+                                                        <td class={`px-6 py-4 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
+                                                            {item.netProfit >= 0 ? '+' : ''}{item.netProfit.toLocaleString(undefined, {maximumFractionDigits:0})} ฿
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </section>
 
-                        {/* ใหม่: การอัปเดตช่องทางติดต่อและข้อมูลฝ่ายขาย/เทคนิคชุดใหม่ครบถ้วนตรงตามสเปก */}
                         <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12">
                             <div class="border-b border-slate-800 pb-4 text-center md:text-left">
                                 <h4 class="font-bold text-xl text-amber-400">⚡ สนใจขอเสนอราคาโปรโมชั่นพิเศษหรือนัดสำรวจหน้างาน</h4>
