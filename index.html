@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.0.0</title>
+    <title>TYE Solar ROI Expert Master - V6.1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -13,11 +13,12 @@
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* การตั้งค่าหน้ากระดาษจำลอง A4 บนหน้าจอเบราว์เซอร์ */
         .a4-page {
             width: 210mm;
             min-height: 297mm;
@@ -28,11 +29,15 @@
             box-sizing: border-box;
         }
 
-        /* มาตรฐานควบคุมเมื่อสั่งพิมพ์ออกทางเครื่องปริ้นเตอร์หรือบันทึกเป็น PDF */
+        @media screen {
+            .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
+            .screen-layout { display: block; }
+        }
         @media print {
             .no-print { display: none !important; }
-            body { background: #ffffff; padding: 0; margin: 0; }
-            .a4-page { width: 100%; min-height: 100%; padding: 10mm; margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
+            .screen-layout { display: none !important; }
+            .print-layout { position: static; display: block; width: 100%; max-width: 100%; background: #ffffff; }
+            .page-break { page-break-after: always; break-after: page; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
@@ -134,18 +139,74 @@
             "อุทัยธานี": 4.18, "อุบลราชธานี": 4.35
         };
 
+        const SolarChart = ({ savingYearly, investment }) => {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+                const ctx = canvasRef.current.getContext('2d');
+                if (chartRef.current) chartRef.current.destroy();
+
+                const labels = Array.from({length: 25}, (_, i) => `ปีที่ ${i+1}`);
+                let cumulativeSaving = 0;
+                const dataSaving = labels.map((_, i) => {
+                    cumulativeSaving += savingYearly * Math.pow(0.995, i);
+                    return Math.round(cumulativeSaving);
+                });
+
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'ประหยัดสะสม (บาท)',
+                                data: dataSaving,
+                                backgroundColor: 'rgba(30, 58, 138, 0.6)',
+                                borderColor: '#1e3a8a',
+                                borderWidth: 1,
+                                order: 2
+                            },
+                            {
+                                label: 'เงินลงทุนรวมทั้งโครงการ (บาท)',
+                                data: Array(25).fill(investment),
+                                borderColor: '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                type: 'line',
+                                fill: false,
+                                pointRadius: 0,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
+                            x: { ticks: { font: { family: 'Sarabun', size: 9 } } }
+                        }
+                    }
+                });
+            }, [savingYearly, investment]);
+
+            return <div className="h-56 w-full mt-2"><canvas ref={canvasRef}></canvas></div>;
+        };
+
         const App = () => {
-            const [bill, setBill] = useState(5000);
+            const [bill, setBill] = useState(15000);
             const [province, setProvince] = useState("กรุงเทพมหานคร");
             const [tariffType, setTariffType] = useState("tou"); 
             const [systemType, setSystemType] = useState("hybrid"); 
             
-            const [dayUsage, setDayUsage] = useState(50);      
+            const [dayUsage, setDayUsage] = useState(60);      
             const [eveningUsage, setEveningUsage] = useState(30);  
-            const [nightUsage, setNightUsage] = useState(20);    
+            const [nightUsage, setNightUsage] = useState(10);    
 
             const [phase, setPhase] = useState("3");
-            
             const [batteryBrand, setBatteryBrand] = useState("Deye (ประกัน 10ปี)");
 
             const [isRegistered, setIsRegistered] = useState(false);
@@ -163,9 +224,6 @@
             const [pumpHrs, setPumpHrs] = useState(0);
             const [tvQty, setTvQty] = useState(0);
             const [tvHrs, setTvHrs] = useState(0);
-
-            const canvasRef = useRef(null);
-            const chartInstanceRef = useRef(null);
 
             const sunHours = useMemo(() => PROVINCE_SUN_HOURS[province] || 4.0, [province]);
 
@@ -204,12 +262,6 @@
                 }
                 return idx;
             }, [batteryBrand, minBatterySize]);
-
-            const selectedBatteryCapStr = useMemo(() => {
-                const brandGroup = BATTERY_OPTIONS[batteryBrand] || [];
-                const item = brandGroup[batteryIndex];
-                return item ? item.cap : "5.12 kWh";
-            }, [batteryBrand, batteryIndex]);
 
             const handleDayChange = (val) => {
                 const newDay = Math.min(100, Math.max(0, Number(val)));
@@ -315,6 +367,29 @@
                 return cashFlowData.filter(item => item.year <= 10 || item.year === 15 || item.year === 20 || item.year === 25);
             }, [cashFlowData]);
 
+            // ⭐ ย้ายการประมวลผล Lookups ทั้งหมดขึ้นมาคำนวณด้านบนเพื่อป้องกันปัญหา Babel Standalone หลุดโฟกัส
+            const selectedBatteryCapStr = useMemo(() => {
+                const brandGroup = BATTERY_OPTIONS[batteryBrand] || [];
+                const item = brandGroup[batteryIndex];
+                return item ? item.cap : "5.12 kWh";
+            }, [batteryBrand, batteryIndex]);
+
+            const packageNameStr = useMemo(() => {
+                return matchedPackage ? matchedPackage.name : "-";
+            }, [matchedPackage]);
+
+            const packagePriceStr = useMemo(() => {
+                return matchedPackage ? Number(matchedPackage.price).toLocaleString() : "0";
+            }, [matchedPackage]);
+
+            const packagePanelsStr = useMemo(() => {
+                return matchedPackage ? matchedPackage.panels : "0";
+            }, [matchedPackage]);
+
+            const packageAreaStr = useMemo(() => {
+                return matchedPackage ? matchedPackage.area : "0";
+            }, [matchedPackage]);
+
             const paybackPeriodStr = useMemo(() => {
                 const years = estInvestment / (estSaving * 12 || 1);
                 return years.toFixed(1);
@@ -325,82 +400,6 @@
                 return Math.round(total).toLocaleString();
             }, [estSaving]);
 
-            useEffect(() => {
-                if (!canvasRef.current) return;
-                const ctx = canvasRef.current.getContext('2d');
-                if (chartInstanceRef.current) {
-                    chartInstanceRef.current.destroy();
-                }
-
-                const labels = Array.from({length: 25}, (_, i) => `ปีที่ ${i+1}`);
-                let cumulativeSaving = 0;
-                const dataSaving = labels.map((_, i) => {
-                    cumulativeSaving += estSaving * 12 * Math.pow(0.995, i);
-                    return Math.round(cumulativeSaving);
-                });
-
-                chartInstanceRef.current = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'ประหยัดสะสม (บาท)',
-                                data: dataSaving,
-                                backgroundColor: 'rgba(30, 58, 138, 0.6)',
-                                borderColor: '#1e3a8a',
-                                borderWidth: 1,
-                                order: 2
-                            },
-                            {
-                                label: 'เงินลงทุนรวมทั้งโครงการ (บาท)',
-                                data: Array(25).fill(estInvestment),
-                                borderColor: '#ef4444',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                                type: 'line',
-                                fill: false,
-                                pointRadius: 0,
-                                order: 1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11, weight: 'bold' } } } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
-                            x: { ticks: { font: { family: 'Sarabun', size: 9 } } }
-                        }
-                    }
-                });
-            }, [estSaving, estInvestment]);
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                try {
-                    await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            name: formData.name,
-                            message: formData.tel,
-                            province: province,
-                            email: `V6.0.0|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
-                        }),
-                        mode: 'no-cors' 
-                    });
-                    setIsRegistered(true);
-                    setShowModal(false);
-                } catch (error) {
-                    setIsRegistered(true);
-                    setShowModal(false);
-                } finally { 
-                    setIsLoading(false);
-                }
-            };
-
             const executePrint = () => {
                 window.print();
             };
@@ -408,11 +407,11 @@
             return (
                 <div className="min-h-screen flex flex-col lg:flex-row">
                     
-                    {/* ⚙️ แผงควบคุมและกล่องคำนวณโหลดเครื่องใช้ไฟฟ้า (จะซ่อนตัวเมื่อสั่งปริ้นลงกระดาษ) */}
+                    {/* ⚙️ แผงควบคุมสไลเดอร์ฝั่งซ้าย (ซ่อนอัตโนมัติเมื่อสั่งปริ้น) */}
                     <div className="w-full lg:w-[420px] bg-slate-900 text-slate-100 p-6 space-y-6 overflow-y-auto no-print flex-shrink-0 custom-scrollbar shadow-2xl">
                         <div>
                             <h1 className="text-lg font-black tracking-tight flex items-center gap-2 text-white">
-                                ⭐ TYE SOLARMASTER <span className="text-xs bg-orange-600 px-2 py-0.5 rounded font-bold">V6.0</span>
+                                ⭐ TYE SOLARMASTER <span className="text-xs bg-orange-600 px-2 py-0.5 rounded font-bold">V6.1</span>
                             </h1>
                             <p className="text-[11px] text-slate-400 mt-1">ระบบวิเคราะห์วิศวกรรมข้อมูลสถาปัตยกรรมเดี่ยว</p>
                         </div>
@@ -463,15 +462,15 @@
                             <label className="block text-xs font-bold text-slate-400">6. สัดส่วนพฤติกรรมการบริโภคไฟ (%)</label>
                             <div className="space-y-3 bg-slate-800/50 p-3 rounded-xl border border-slate-800">
                                 <div>
-                                    <div class="flex justify-between text-xs font-bold mb-1"><span>☀️ กลางวัน</span><span className="text-blue-400">{dayUsage}%</span></div>
+                                    <div className="flex justify-between text-xs font-bold mb-1"><span>☀️ กลางวัน</span><span className="text-blue-400">{dayUsage}%</span></div>
                                     <input type="range" min="0" max="100" value={dayUsage} onChange={(e) => handleDayChange(e.target.value)} className="w-full accent-blue-500" />
                                 </div>
                                 <div>
-                                    <div class="flex justify-between text-xs font-bold mb-1"><span>🌆 หัวค่ำ</span><span className="text-orange-400">{eveningUsage}%</span></div>
+                                    <div className="flex justify-between text-xs font-bold mb-1"><span>🌆 หัวค่ำ</span><span className="text-orange-400">{eveningUsage}%</span></div>
                                     <input type="range" min="0" max="100" value={eveningUsage} onChange={(e) => handleEveningChange(e.target.value)} className="w-full accent-orange-500" />
                                 </div>
                                 <div>
-                                    <div class="flex justify-between text-xs font-bold mb-1"><span>🌙 ดึก-เช้า</span><span className="text-purple-400">{nightUsage}%</span></div>
+                                    <div className="flex justify-between text-xs font-bold mb-1"><span>🌙 ดึก-เช้า</span><span className="text-purple-400">{nightUsage}%</span></div>
                                     <input type="range" min="0" max="100" value={nightUsage} onChange={(e) => handleNightChange(e.target.value)} className="w-full accent-purple-500" />
                                 </div>
                             </div>
@@ -480,43 +479,233 @@
                         {systemType === "hybrid" && (
                             <div className="space-y-4 bg-slate-800/40 p-3 rounded-xl border border-slate-800">
                                 <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">🌇 กล่องกรอกโหลดเครื่องใช้ไฟฟ้าหัวค่ำ</label>
-                                <div className="space-y-2 text-xs font-bold">
+                                <div className="space-y-2 text-xs font-bold text-slate-300">
                                     <div className="flex items-center justify-between gap-1">
                                         <span>แอร์ 9k-12k BTU (900W)</span>
                                         <div className="flex gap-1">
-                                            <input type="number" placeholder="ตัว" value={ac1Qty || ''} onChange={(e) => setAc1Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
-                                            <input type="number" placeholder="ชม." value={ac1Hrs || ''} onChange={(e) => setAc1Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ตัว" value={ac1Qty || ""} onChange={(e) => setAc1Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ชม." value={ac1Hrs || ""} onChange={(e) => setAc1Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-1">
                                         <span>แอร์ 18k-24k (1800W)</span>
                                         <div className="flex gap-1">
-                                            <input type="number" placeholder="ตัว" value={ac2Qty || ''} onChange={(e) => setAc2Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
-                                            <input type="number" placeholder="ชม." value={ac2Hrs || ''} onChange={(e) => setAc2Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ตัว" value={ac2Qty || ""} onChange={(e) => setAc2Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ชม." value={ac2Hrs || ""} onChange={(e) => setAc2Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-1">
                                         <span>ตู้เย็นประจำบ้าน (200W)</span>
                                         <div className="flex gap-1">
-                                            <input type="number" placeholder="เครื่อง" value={refQty || ''} onChange={(e) => setRefQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
-                                            <input type="number" placeholder="ชม." value={refHrs || ''} onChange={(e) => setRefHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="เครื่อง" value={refQty || ""} onChange={(e) => setRefQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ชม." value={refHrs || ""} onChange={(e) => setRefHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-1">
                                         <span>ปั๊มน้ำอัตโนมัติ (500W)</span>
                                         <div className="flex gap-1">
-                                            <input type="number" placeholder="ตัว" value={pumpQty || ''} onChange={(e) => setPumpQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
-                                            <input type="number" placeholder="ชม." value={pumpHrs || ''} onChange={(e) => setPumpHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ตัว" value={pumpQty || ""} onChange={(e) => setPumpQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ชม." value={pumpHrs || ""} onChange={(e) => setPumpHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-1">
                                         <span>ทีวี แอลอีดี (150W)</span>
                                         <div className="flex gap-1">
-                                            <input type="number" placeholder="เครื่อง" value={tvQty || ''} onChange={(e) => setTvQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
-                                            <input type="number" placeholder="ชม." value={tvHrs || ''} onChange={(e) => setTvHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="เครื่อง" value={tvQty || ""} onChange={(e) => setTvQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
+                                            <input type="number" placeholder="ชม." value={tvHrs || ""} onChange={(e) => setTvHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 bg-slate-900 text-center py-1 rounded border border-slate-700 text-white" />
                                         </div>
                                     </div>
                                     <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-800">
                                         แบรนด์แบตเตอรี่หลัก:
                                         <select value={batteryBrand} onChange={(e) => setBatteryBrand(e.target.value)} className="w-full mt-1 bg-slate-900 text-white p-2 rounded border border-slate-700 font-bold focus:outline-none">
-                                            {Object
+                                            {Object.keys(BATTERY_OPTIONS).map(b => <option key={b} value={b}>{b}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={executePrint} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-4 rounded-xl shadow-xl active:scale-[0.98] transition-all text-sm tracking-wider uppercase block">
+                            🖨️ สั่งพิมพ์เล่มเสนอราคา (Save PDF)
+                        </button>
+                    </div>
+
+                    {/* 📄 🏢 หน้ากระดาษจำลอง LIVE DIGITAL PREVIEW (จัดเรียงสถาปัตยกรรมแบบกระชับ 2 หน้าตรงสเปก ปราศจากตรรกะแครช) */}
+                    <div className="print-layout flex-grow overflow-y-auto p-0 md:p-6 bg-slate-200/60 custom-scrollbar">
+                        
+                        {/* 📄 หน้าเอกสารที่ 1 */}
+                        <div className="a4-page flex flex-col justify-between">
+                            <div>
+                                <div className="border-b-4 border-slate-950 pb-4 mb-6">
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <h2 className="text-lg font-black text-slate-900 tracking-tight">เล่มรายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
+                                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Technical Financing Investment Proposal — Official Audit</p>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-xs font-black text-blue-900">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
+                                            <p className="text-[9px] text-slate-400 font-medium">Technical Expert Solutions</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 col-span-2 pl-2">1. รายละเอียดข้อมูลลูกค้าผู้รับข้อเสนอและพารามิเตอร์ฐาน (Customer Profile)</h3>
+                                    <div className="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-4 gap-x-4 gap-y-2 text-xs font-bold text-slate-700">
+                                        <div>ชื่อ-นามสกุล ของลูกค้า: <span className="text-slate-950 font-black">{formData.name || "-"}</span></div>
+                                        <div>จังหวัดสถานที่ติดตั้งอาคาร: <span className="text-slate-950 font-black">จังหวัด {province}</span></div>
+                                        <div>เบอร์โทรศัพท์ติดต่อ: <span className="text-slate-950 font-black">{formData.tel || "-"}</span></div>
+                                        <div>เกณฑ์ประมาณการฐานค่าไฟเดิม: <span className="text-slate-950 font-black">เดือนละ {Number(bill).toLocaleString()} บาท</span></div>
+                                        <div>สถาปัตยกรรมระบบประเภทที่เลือก: <span className="text-slate-950 font-black uppercase">{systemType} System</span></div>
+                                        <div>สัดส่วนพฤติกรรมการกินไฟ: <span className="text-slate-950 font-black">กลางวัน {dayUsage}% / ค่ำ {eveningUsage}% / ดึก {nightUsage}%</span></div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">2. ขนาดกำลังการผลิตติดตั้งระบบที่แนะนำเชิงวิศวกรรม (Recommended Capacity)</h3>
+                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-xs text-blue-950 font-bold">ขนาดติดตั้งแผงโซล่าเซลล์รวมที่คุ้มค่าทางเศรษฐศาสตร์สูงสุด</p>
+                                            <p className="text-[9px] text-slate-400 font-medium mt-0.5">*คำนวณประมวลผลอ้างอิงตามค่าความเข้มแสงและปริมาณชั่วโมงแดดเฉลี่ยรายวันจริงของพิกัดหน้างาน</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-2xl font-black text-slate-900">{solarSize}</span>
+                                            <span className="text-sm font-bold text-slate-500 ml-1">kWp</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">3. สรุปรายละเอียดชุดแพ็กเกจอุปกรณ์และการลงทุนรวม (Investment Packages)</h3>
+                                    <div className="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-3 bg-white">
+                                        <div className="flex justify-between items-center text-slate-800">
+                                            <span>1. {packageNameStr} (ราคาฐานแผงโซล่าเซลล์หลัก + อินเวอร์เตอร์คุณภาพสูง):</span>
+                                            <span className="font-black text-slate-950 text-sm">{packagePriceStr} ฿</span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 font-normal pl-3 leading-relaxed text-slate-500">
+                                            * รายการแผงสถานะติดตั้ง: ใช้แผงเกรดพรีเมียมระดับโลก JA Solar (Tier-1) จำนวน {packagePanelsStr} แผง | ใช้พื้นที่จัดวางบนโครงสร้างหลังคาอาคารโดยประมาณ {packageAreaStr} ตารางเมตร
+                                        </div>
+                                        {systemType === "hybrid" && (
+                                            <div className="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-2 font-bold">
+                                                <span>2. แบตเตอรี่แอดออนล็อกฐานเริ่มต้นเพื่อความปลอดภัย {batteryBrand} [{selectedBatteryCapStr}]:</span>
+                                                <span className="font-black">+{Number(estBatteryCost).toLocaleString()} ฿</span>
+                                            </div>
+                                        )}
+                                        <div className="border-t border-dashed border-slate-300 pt-3 flex justify-between items-baseline text-slate-900 font-black">
+                                            <span className="text-sm">💰 มูลค่ารวมงบเงินลงทุนสุทธิทั้งโครงการติดตั้ง (รวมภาษีมูลค่าเพิ่ม):</span>
+                                            <span className="text-emerald-600 text-2xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-[9px] text-slate-400 font-medium text-center border-t border-slate-100 pt-2">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</div>
+                        </div>
+
+                        {/* 📄 หน้าเอกสารที่ 2 */}
+                        <div className="a4-page flex flex-col justify-between">
+                            <div>
+                                <div className="border-b border-slate-200 pb-1 mb-4">
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ส่วนแบบจำลองผลตอบแทนทางการเงินและบัญชีกระแสเงินสด (Financial return Simulation)</p>
+                                </div>
+
+                                <div className="mb-4 bg-white border border-slate-200 p-2 rounded-xl">
+                                    <p className="text-[10px] font-black text-slate-700 text-center mb-1">แผนภูมิเปรียบเทียบมูลค่าผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนรวมโครงการ</p>
+                                    <div className="h-52 w-full relative">
+                                        <canvas ref={canvasRef}></canvas>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนโดยประมาณ (Payback Period)</p>
+                                        <p className="text-orange-600 text-xl font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
+                                    </div>
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
+                                        <p className="text-emerald-700 text-xl font-black">{netLifetimeProfitStr} <span className="text-xs font-bold text-slate-500">฿</span></p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5 border-l-4 border-slate-800 pl-2">4. ตารางประเมินผลแจกแจงบัญชีกระแสเงินสดสะสมฉบับย่อ (Condensed Cash Flow Table)</h3>
+                                    <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden font-medium">
+                                        <thead className="bg-slate-900 text-white font-bold text-[9px] uppercase">
+                                            <tr>
+                                                <th className="px-4 py-2">ปีที่</th>
+                                                <th className="px-4 py-2">ประมาณการประหยัดต่อปี</th>
+                                                <th className="px-4 py-2">ผลประหยัดรายปีสะสม</th>
+                                                <th className="px-4 py-2">กำไรสุทธิสะสมหลังหักเงินทุน</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-200 bg-white">
+                                            {condensedCashFlow.map((item) => (
+                                                <tr key={item.year} className={item.netProfit >= 0 ? "bg-emerald-50/20" : ""}>
+                                                    <td className="px-4 py-1.5 font-bold text-slate-900">ปีที่ {item.year}</td>
+                                                    <td className="px-4 py-1.5 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} ฿</td>
+                                                    <td className="px-4 py-1.5 text-slate-600">{Math.round(item.cumulative).toLocaleString()} ฿</td>
+                                                    <td className={`px-4 py-1.5 font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
+                                                        {item.netProfit >= 0 ? "+" : ""}{Math.round(item.netProfit).toLocaleString()} ฿
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div className="border-t-2 border-slate-900 pt-3 font-sans text-[10px]">
+                                <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
+                                <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold">
+                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายขายและการตลาด</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณมยุรา (จอย)</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 062-289-2261</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายบริการลูกค้า</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณศุภลักษณ์ (อัฐ)</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 092-492-7722</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายเทคนิคและวิศวกรรม</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณโมสต์</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 099-563-6837</p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center mt-3 text-[8px] text-slate-400 border-t border-slate-100 pt-1.5 font-normal">
+                                    <span>* ประมาณการผลตอบแทนคำนวณร่วมตามโครงสร้างฐานภาษีและเกณฑ์เศรษฐศาสตร์ของ TYE Solar ในปี 2026</span>
+                                    <span>หน้า 2 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {showModal && !isRegistered && (
+                        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
+                                <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ TYE Solar Audit</h3>
+                                <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเข้าใช้งานระบบประมวลผลคำนวณจุดคุ้มทุน</p>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div className="text-left">
+                                        <label className="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-widest">Installation Province</label>
+                                        <select value={province} onChange={(e) => setProvince(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
+                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                    </div>
+                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
+                                    <input type="submit" disabled={isLoading} value={isLoading ? "Processing..." : "เปิดระบบคำนวณโปรโมชั่น"} className="w-full text-center block bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg cursor-pointer" />
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
