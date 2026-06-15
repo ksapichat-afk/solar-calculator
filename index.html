@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.6.0</title>
+    <title>TYE Solar ROI Expert Master - V6.6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -357,7 +357,7 @@
                                 <span className="text-slate-400 font-normal hidden md:inline">|</span>
                                 <span className="text-xs md:text-sm text-slate-300">บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</span>
                             </h1>
-                            <button type="button" onClick={executePrint} className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-xl text-xs md:text-sm shadow-md active:scale-[0.95] transition-all cursor-pointer">
+                            <button type="button" onClick={executePrint} className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-xl text-xs md:text-sm shadow-md active:scale-95 transition-all cursor-pointer">
                                 🖨️ สั่งพิมพ์เล่มรายงาน
                             </button>
                         </header>
@@ -515,7 +515,6 @@
                                                     </table>
                                                 </div>
                                                 
-                                                {/* ⭐ 1. กู้คืนกล่องแสดง watt พลังงานรวมช่วงหัวค่ำด้านล่างตารางหน้าแรกให้กลับมาทำงานสมบูรณ์ */}
                                                 <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl gap-1">
                                                     <span className="text-slate-600 font-semibold">พลังงานรวมช่วงหัวค่ำ: <strong className="text-orange-600">{eveningTotalWh.toLocaleString()} Wh</strong></span>
                                                     <span className="text-slate-800 font-bold">ขนาดแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%): <strong className="text-blue-700">{minBatterySize.toFixed(2)} kWh</strong></span>
@@ -561,7 +560,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span>💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
+                                                <span>💰 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -646,7 +645,6 @@
                         {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร(รวมระบบไฟ/มิเตอร์) + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งจัดขนาดลงตัว */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                {/* ⭐ ปรับพื้นหลังบล็อกหัวเรื่องเอกสาร (Header) ให้เป็นกล่องสีส้มอ่อนตามสั่ง และย้ายชื่อบริษัทออกไป */}
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm">
                                     <h2 className="text-base font-black text-slate-900 tracking-tight text-center">รายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
                                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider text-center mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
@@ -654,7 +652,6 @@
 
                                 <div className="mb-5">
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">1. รายละเอียดข้อมูลลูกค้าคู่สัญญาและพารามิเตอร์ฐาน (Customer Profile)</h3>
-                                    {/* ⭐ รวมข้อมูลระบบไฟและมิเตอร์ค่าไฟเข้ามาจัดสแตมป์ในกล่องข้อมูลลูกค้าแผ่นที่ 1 ครบวงจร */}
                                     <div className="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-4 gap-y-2 text-xs font-bold text-slate-700">
                                         <div>ชื่อ-นามสกุล ของลูกค้า: <span className="text-slate-950 font-black">{formData.name || '-'}</span></div>
                                         <div>เบอร์โทรศัพท์ติดต่อ: <span className="text-slate-950 font-black">{formData.tel || '-'}</span></div>
@@ -704,16 +701,15 @@
                                     </div>
                                 </div>
 
-                                {/* ⭐ 3. ปรับขนาดความสูงกราฟแท่งบนแผ่นที่ 1 ให้เป็นสเกลคมชัดกระชับพอดีกับพื้นที่ว่างที่เหลือในกระดาษหน้าแรก */}
+                                {/* ⭐ แก้ไขวิกฤตกราฟบี้เตี้ยตามภาพแผ่นภาพถ่าย: ดันขนาดส่วนสูงขึ้นเป็น h-[110mm] เพื่อขยายถมหน้ากระดาษที่เหลือให้เต็มสัดส่วนสวยงามพอดีคำสั่งซื้อ */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-44 w-full relative">
+                                    <div className="h-[110mm] w-full relative">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
                             </div>
                             
-                            {/* ⭐ ย้ายชื่อบริษัทแบรนดิ้งของบริษัทลงมาจัดวางกึ่งกลางหน้ากระดาษไว้ที่บริเวณ Footer ของแผ่นที่ 1 */}
                             <div className="text-center border-t border-slate-200 pt-2 text-[10px] font-black text-slate-500 tracking-wide">
                                 บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด
                                 <p className="text-[8px] text-slate-400 font-normal mt-0.5">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</p>
@@ -723,7 +719,6 @@
                         {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + กางตาราง Cash Flow เต็มรูปแบบ 1-25 ปีสีขาวสะอาดล้วน + Footer */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                {/* ⭐ ปรับพื้นหลังบล็อกหัวเรื่องตาราง (Header) หน้าที่ 2 ให้เป็นกล่องสีส้มอ่อนสอดคล้องกันตามสั่ง */}
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm">
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-widest text-center">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
@@ -734,13 +729,12 @@
                                         <p className="text-orange-600 text-base font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
                                     </div>
                                     <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center font-bold">
-                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">...มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
                                         <p className="text-emerald-700 text-base font-black">{netLifetimeProfitStr} บ.</p>
                                     </div>
                                 </div>
 
                                 <div className="mb-3">
-                                    {/* ⭐ 4. ขยายตารางแจกแจงข้อมูลให้วิ่งเต็มพิกัดครบถ้วนทุกปีตั้งแต่ 1-25 และล้างแถบสีฟ้าอ่อนไฮไลต์แถวออกทั้งหมดให้กลายเป็นพื้นขาวล้วนสวยงามสม่ำเสมอ */}
                                     <table className="w-full text-left text-[10px] border border-slate-200 rounded-xl overflow-hidden font-medium">
                                         <thead className="bg-slate-900 text-white font-bold text-[8px] uppercase">
                                             <tr>
@@ -766,7 +760,6 @@
                                 </div>
                             </div>
 
-                            {/* ⭐ สแตมป์ชื่อบริษัทปิดท้ายเล่มกระดาษไว้ที่ Footer ตรงกลางกระดาษของแผ่นที่ 2 สวยงามสมบูรณ์แบบ */}
                             <div className="border-t border-slate-200 pt-2 font-sans text-[10px]">
                                 <div className="flex justify-between items-center text-slate-600 font-bold mb-3 text-[9px]">
                                     <span>* เล่มเอกสารเสนอโครงการจัดทำระบบพลังงานแสงอาทิตย์เกรดพรีเมียม</span>
