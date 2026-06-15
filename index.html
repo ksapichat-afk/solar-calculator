@@ -323,34 +323,24 @@
                             ]
                         },
                         options: {
-    responsive: true,
-    maintainAspectRatio: false, // สำคัญมาก: ต้องเป็น false เพื่อให้ยืดตาม div
-    layout: {
-        padding: { top: 20, right: 10, bottom: 5, left: 10 } // เติม padding top เผื่อที่ให้ label ด้านบน
-    },
-    scales: {
-        y: {
-            beginAtZero: true,
-            ticks: { 
-                font: { size: 9 }, 
-                callback: (v) => v.toLocaleString() + ' บ.' 
-            }
-        },
-        x: {
-            // สำคัญ: บังคับให้แสดง ticks เสมอ และปรับให้กระชับ
-            ticks: { 
-                font: { size: 8 }, 
-                autoSkip: false, // ป้องกันกราฟซ่อนจำนวนปี
-                maxRotation: 45, // เอียงตัวเลข 45 องศาเพื่อประหยัดพื้นที่
-                minRotation: 45
-            },
-            grid: { display: false } // ปิดเส้น grid แกน X เพื่อให้ดูสะอาดขึ้น
-        }
-    },
-    plugins: {
-        legend: { display: false } // ปิด legend ถ้าพื้นที่จำกัด เพื่อคืนที่ให้กราฟ
-    }
-}
+                            responsive: !isPrintSize, 
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    right: isPrintSize ? 35 : 10,
+                                    left: 10,
+                                    top: 5,
+                                    bottom: 5
+                                }
+                            },
+                            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
+                                x: { ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 } } }
+                            }
+                        }
+                    });
+                };
 
                 buildChart(canvasRef1, chart1, false);
                 buildChart(canvasRef2, chart2, true);
@@ -731,17 +721,12 @@
                                     </div>
                                 </div>
 
-                                <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm w-full">
-    {/* ลดขนาด font หัวข้อลงนิดนึงเพื่อไม่ให้แย่งที่กราฟ */}
-    <p className="text-[8px] font-bold text-slate-700 text-center mb-1">
-        แผนภูมิประเมินผลประหยัดสะสม (25 ปี)
-    </p>
-    
-    {/* ใช้ค่าตายตัวแค่ height ส่วน width ปล่อยให้มันยืดเต็มของมันเอง */}
-    <div style={{ height: '70mm', width: '100%' }}>
-        <canvas ref={canvasRef2}></canvas>
-    </div>
-</div>
+                                <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
+                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <div className="h-[75mm] w-[172mm] mx-auto relative">
+                                        <canvas ref={canvasRef2}></canvas>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div className="text-center border-t border-slate-200 pt-2 text-[10px] font-black text-slate-500 tracking-wide">
