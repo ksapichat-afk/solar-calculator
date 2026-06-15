@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.7.0</title>
+    <title>TYE Solar ROI Expert Master - V6.7.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -358,12 +358,12 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100% ติดตั้งรูปโลโก้คู่ขนาน) */}
+                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100% ฝังระบบปลดล็อก Hotlink ข้ามเครื่อง) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                {/* โลโก้จริงของบริษัท บนหน้าต่างควบคุมหน้าจอเว็บคอมพิวเตอร์ */}
-                                <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
+                                {/* ⭐ ฝัง referrerPolicy ปลดล็อกภาพบกพร่องบนระบบหน้าจอคอมพิวเตอร์ */}
+                                <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
                                 <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
                                     <span>⭐ TYE SOLARMASTER</span>
                                     <span className="text-slate-400 font-normal hidden md:inline">|</span>
@@ -573,7 +573,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span>💰 เงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT):</span>
+                                                <span>💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -600,7 +600,7 @@
                                 </div>
 
                                 <div className="pt-8 border-t border-slate-100">
-                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation </h3>
+                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation (หน้าแรกคอมพิวเตอร์)</h3>
                                     <div className="h-64 w-full relative">
                                         <canvas ref={canvasRef1}></canvas>
                                     </div>
@@ -655,14 +655,14 @@
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : บล็อกหัวบริษัทเพิ่มโลโก้จริงตัวจริงคมกริบ + ข้อมูลสเปกครบวงจร + กราฟพรีเมียมพอดีแผ่น */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ปลดล็อกภาพโลโก้ + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งความสูงสมดุลไม่หลุดหน้า */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm text-center">
                                     
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 1 (เด่น ชัดเจน คมกริบระดับโปร) */}
+                                    {/* 📦 ปลดล็อก Hotlink รูปภาพแผ่นพรีวิวพิมพ์ใบที่ 1 */}
                                     <div className="flex flex-col items-center justify-center mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
+                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
                                         <span className="text-[9px] font-black text-slate-800 tracking-widest uppercase mt-1">TYE SOLARMASTER TECHNICAL FINANCING</span>
                                     </div>
 
@@ -735,14 +735,14 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวบริษัทติดโลโก้เรียบร้อย + ตาราง Cash Flow 25 ปีขาวสะอาด + รายชื่อวิศวกร 3 ท่าน */}
+                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวบริษัทติดโลโก้จริง + ตาราง Cash Flow 25 ปีขาวสะอาดกระชับแน่นหนา + รายชื่อวิศวกร 3 ท่าน */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm text-center">
                                     
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 2 (กระชับรับสัดส่วนตาราง) */}
+                                    {/* 📦 ปลดล็อก Hotlink รูปภาพแผ่นพรีวิวพิมพ์ใบที่ 2 */}
                                     <div className="flex items-center justify-center gap-2 mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
+                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
                                         <span className="text-[10px] font-extrabold text-slate-900 tracking-widest uppercase">TYE SOLAR LIFETIME REPORT</span>
                                     </div>
 
@@ -755,7 +755,7 @@
                                         <p className="text-orange-600 text-base font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
                                     </div>
                                     <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center font-bold">
-                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">...มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
                                         <p className="text-emerald-700 text-base font-black">{netLifetimeProfitStr} บ.</p>
                                     </div>
                                 </div>
