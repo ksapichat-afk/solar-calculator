@@ -710,13 +710,14 @@
                                     </div>
                                 </div>
 
-                                {/* กล่องกราฟแท่งแผ่นที่ 1 ขยายตัวถมพื้นที่ตามสัดส่วนภาพถ่ายเรียบร้อย */}
-                                <div className="bg-white border border-slate-200 p-2 pr-9 rounded-xl shadow-sm">
-                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-[110mm] w-full relative">
-                                        <canvas ref={canvasRef2}></canvas>
-                                    </div>
-                                </div>
+                               {/* เอา pr-9 ออก ให้เหลือ p-2 ปกติครับ */}
+<div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
+    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+    {/* ปรับแก้ตรงนี้เป็น w-[95%] mx-auto */}
+    <div className="h-[110mm] w-[95%] mx-auto relative">
+        <canvas ref={canvasRef2}></canvas>
+    </div>
+</div>
                             </div>
                             
                             <div className="text-center border-t border-slate-200 pt-2 text-[10px] font-black text-slate-500 tracking-wide">
