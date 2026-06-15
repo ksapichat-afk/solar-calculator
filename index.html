@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.6.2</title>
+    <title>TYE Solar ROI Expert Master - V6.6.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -324,7 +324,7 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            /* ⭐ แก้ไขวิกฤตกราฟล้นขอบขวาตามภาพ image_acb1fe.png บังคับขอบขวาหดเข้ามา 35px เพื่อให้อยู่ในกรอบมนสมบูรณ์ */
+                            /* ปรับระยะขอบภายใน JavaScript กลับเป็น 35 เท่าเดิมอย่างสมบูรณ์ */
                             layout: {
                                 padding: {
                                     right: isPrintSize ? 35 : 10,
@@ -651,7 +651,7 @@
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งหดสเกลเข้ากรอบขวา */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งความสูงสมดุลไม่หลุดหน้า */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm">
@@ -710,13 +710,13 @@
                                     </div>
                                 </div>
 
-{/* กล่องกราฟแท่งแผ่นที่ 1 ขยายตัวถมพื้นที่ตามสัดส่วนภาพถ่ายเรียบร้อย */}
-<div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
-    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-    <div className="h-[85mm] w-[172mm] relative">
-        <canvas ref={canvasRef2}></canvas>
-    </div>
-</div>
+                                {/* ⭐ ล็อกพิกเซลทางกายภาพแบบตายตัวจบหน้าเดียวสวยงาม กราฟอยู่กรอบสมดุล ไม่แตกตัวเป็น 2 แผ่น */}
+                                <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
+                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <div className="h-[85mm] w-[172mm] mx-auto relative">
+                                        <canvas ref={canvasRef2}></canvas>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div className="text-center border-t border-slate-200 pt-2 text-[10px] font-black text-slate-500 tracking-wide">
@@ -725,7 +725,7 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + ตาราง 25 ปีขาวสะอาด + ดึงกล่องคอนแทกต์วิศวกร 3 ท่านกลับมาล็อกตแหน่ง */}
+                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + ตาราง 25 ปีขาวสะอาด + ล็อกตำแหน่งกล่องผู้ประสานงาน 3 คนท้ายแผ่นพอดีเป๊ะ */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm">
@@ -769,7 +769,7 @@
                                 </div>
                             </div>
 
-                            {/* ⭐ ดึงกลุ่มข้อมูลกล่องคอนแทกต์เบอร์โทรศัพท์ผู้ประสานงานทั้ง 3 ท่านกลับมาวางล็อกพิกเซลอย่างมั่นคงเหนือก้น Footer หน้าสอง */}
+                            {/* ⭐ ดึงกลุ่มข้อมูลกล่องรายชื่อและเบอร์โทรศัพท์ผู้ประสานงานทั้ง 3 ท่านกลับมาสแตมป์พิกเซลอย่างมั่นคงเหนือก้น Footer หน้าสอง */}
                             <div className="border-t border-slate-200 pt-3 font-sans text-[10px]">
                                 <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
                                 <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold mb-3">
