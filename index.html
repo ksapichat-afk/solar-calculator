@@ -9,7 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght=300;400;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -19,7 +19,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* 🖨️ สถาปัตยกรรมควบคุมหน้ากระดาษเสนอราคาขายสากล บังคับ 2 หน้าจบ ไร้รอยต่อ */
         @media screen {
             .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
             .screen-layout { display: block; }
@@ -354,14 +353,33 @@
                 return cashFlowData.filter(item => item.year <= 10 || item.year === 15 || item.year === 20 || item.year === 25);
             }, [cashFlowData]);
 
-            const executePrint = () => {
-                window.print();
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                try {
+                    await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            name: formData.name,
+                            message: formData.tel,
+                            province: province,
+                            email: `V5.9.3|Type:${systemType}|Batt:${batteryBrand}|Index:${batteryIndex}`
+                        }),
+                        mode: 'no-cors' 
+                    });
+                    setIsRegistered(true);
+                    setShowModal(false);
+                } catch (error) {
+                    setIsRegistered(true);
+                    setShowModal(false);
+                } finally { 
+                    setIsLoading(false);
+                }
             };
 
             return (
                 <div class="min-h-screen flex flex-col">
                     
-                    {/* 🖥️ แผงควบคุมหลักบนหน้าจอความละเอียดสูง (จะทำงานเฉพาะโหมดแสดงผลเว็บบราวเซอร์ปกติ) */}
                     <div class="screen-layout flex flex-col flex-grow">
                         <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                             <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
@@ -590,3 +608,193 @@
                                 </div>
 
                                 <div class="pt-8 border-t border-slate-100">
+                                    <h3 class="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">แดชบอร์ดจำลองบนหน้าจอคอมพิวเตอร์</h3>
+                                    <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
+                                </div>
+
+                                <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                                    <button type="button" onClick={executePrint} class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl hover:shadow-blue-200 active:scale-[0.98] transition-all text-base cursor-pointer tracking-wider">
+                                        🖨️ เปิดเล่มพิมพ์รายงานสรุปผลประโยชน์การลงทุน (2 หน้าจบ)
+                                    </button>
+                                </div>
+                            </section>
+                        </main>
+                    </div>
+
+                    <div class="print-layout font-sans text-slate-900 bg-white p-0">
+                        
+                        <div class="page-break flex flex-col justify-between bg-white" style={{ minHeight: '292mm', boxSizing: 'border-box', padding: '15mm' }}>
+                            <div>
+                                <div class="border-b-4 border-slate-900 pb-4 mb-6">
+                                    <div class="flex justify-between items-end">
+                                        <div>
+                                            <h2 class="text-base font-black text-slate-900 tracking-tight">เล่มรายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
+                                            <p class="text-[9px] text-slate-500 mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL - FOR INTERNAL USE ONLY</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs font-black text-blue-900">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
+                                            <p class="text-[9px] text-slate-400">Technical Expert Solutions</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-6">
+                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">1. รายละเอียดผู้รับข้อเสนอและพารามิเตอร์ฐาน (Customer Profile)</h3>
+                                    <div class="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-4 gap-y-2 text-xs font-bold text-slate-700">
+                                        <div>ชื่อ-นามสกุล ลูกค้า: <span class="text-slate-950 font-black">{formData.name || '-'}</span></div>
+                                        <div>จังหวัดที่ติดตั้งอาคาร: <span class="text-slate-950 font-black">{province}</span></div>
+                                        <div>เบอร์โทรศัพท์ติดต่อ: <span class="text-slate-950 font-black">{formData.tel || '-'}</span></div>
+                                        <div>ฐานค่าไฟฟ้าเดิม: <span class="text-slate-950 font-black">เดือนละ {Number(bill).toLocaleString()} บาท</span></div>
+                                        <div>ประเภทระบบคำนวณ: <span class="text-slate-950 font-black uppercase">{systemType} System</span></div>
+                                        <div>พฤติกรรมการบริโภคไฟ: <span class="text-slate-950 font-black">กลางวัน {dayUsage}% / ค่ำ {eveningUsage}% / ดึก {nightUsage}%</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-6">
+                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">2. ขนาดกำลังการผลิตที่แนะนำเชิงวิศวกรรม (Recommended Capacity)</h3>
+                                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
+                                        <div>
+                                            <p class="text-xs text-blue-950 font-bold">ขนาดติดตั้งระบบที่คุ้มค่าทางเศรษฐศาสตร์มากที่สุด</p>
+                                            <p class="text-[9px] text-slate-400 mt-0.5">*คำนวณสอดคล้องตามปริมาณความเข้มแสงจริงของจังหวัด {province}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xl font-black text-slate-900">{solarSize}</span>
+                                            <span class="text-xs font-bold text-slate-500 ml-1">kWp</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-6">
+                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">3. สรุปรายละเอียดชุดแพ็กเกจราคาและการลงทุน (Investment Packages)</h3>
+                                    {matchedPackage ? (
+                                        <div class="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-3 bg-white">
+                                            <div class="flex justify-between items-center text-slate-800">
+                                                <span>1. {matchedPackage.name} (ระบบแผงโซล่าเซลล์หลัก + อินเวอร์เตอร์):</span>
+                                                <span class="font-black text-slate-950">{Number(matchedPackage.price).toLocaleString()} ฿</span>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 pl-3 font-normal leading-relaxed">
+                                                * อุปกรณ์ภายในเล่ม: แผง JA Solar จำนวน {matchedPackage.panels} แผง | ใช้พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตารางเมตร
+                                            </div>
+                                            {systemType === "hybrid" && (
+                                                <div class="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-2 font-bold">
+                                                    <span>2. แบตเตอรี่แอดออนเสริมเสถียรภาพระบบ {batteryBrand} [{BATTERY_OPTIONS[batteryBrand]?.[batteryIndex]?.cap || '5.12 kWh'}]:</span>
+                                                    <span class="font-black">+{Number(estBatteryCost).toLocaleString()} ฿</span>
+                                                </div>
+                                            )}
+                                            <div class="border-t border-dashed border-slate-300 pt-3 flex justify-between items-baseline text-slate-900 font-black">
+                                                <span class="text-xs">💰 มูลค่ารวมเงินลงทุนสุทธิทั้งโครงการ (รวม VAT):</span>
+                                                <span class="text-emerald-600 text-xl tracking-tight">{Number(estInvestment).toLocaleString()} บาท</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p class="text-xs text-slate-400">ไม่มีข้อมูลแพ็กเกจราคา</p>
+                                    )}
+                                </div>
+                            </div>
+                            <div class="text-[9px] text-slate-400 text-center border-t border-slate-100 pt-2">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</div>
+                        </div>
+
+                        <div class="flex flex-col justify-between bg-white" style={{ minHeight: '292mm', boxSizing: 'border-box', padding: '15mm' }}>
+                            <div>
+                                <div class="border-b border-slate-200 pb-1 mb-4">
+                                    <p class="text-xs font-black text-slate-900 uppercase tracking-widest">📈 แผนภูมิจำลองและตารางบัญชีกระแสเงินสดสะสม (Financial Return Simulation)</p>
+                                </div>
+
+                                <div class="mb-4 bg-white border border-slate-200 p-2 rounded-xl">
+                                    <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนโครงการ</p>
+                                        <p class="text-orange-600 text-xl font-black">{(estInvestment / (estSaving * 12 || 1)).toFixed(1)} <span class="text-xs font-bold text-slate-500">ปี</span></p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ผลประหยัดรวมสะสม 25 ปี</p>
+                                        <p class="text-emerald-700 text-xl font-black">{Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} ฿</p>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5 border-l-4 border-slate-800 pl-2">4. ตารางแจกแจงกระแสเงินสดสะสมแบบสรุปย่อ (Condensed Cash Flow Report)</h3>
+                                    <table class="w-full text-left text-[11px] border border-slate-200 rounded-xl overflow-hidden font-medium">
+                                        <thead class="bg-slate-900 text-white font-bold text-[9px] uppercase">
+                                            <tr>
+                                                <th class="px-3 py-1.5">ปีที่</th>
+                                                <th class="px-3 py-1.5">คาดการณ์ผลประหยัดต่อปี</th>
+                                                <th class="px-3 py-1.5">ผลประหยัดสะสม</th>
+                                                <th class="px-3 py-1.5">กำไรสุทธิสะสมหลังหักเงินทุน</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-200 bg-white">
+                                            {condensedCashFlow.map((item) => (
+                                                <tr key={item.year} class={item.netProfit >= 0 ? 'bg-emerald-50/20' : ''}>
+                                                    <td class="px-3 py-1 font-bold text-slate-900">ปีที่ {item.year}</td>
+                                                    <td class="px-3 py-1 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} ฿</td>
+                                                    <td class="px-3 py-1 text-slate-600">{Math.round(item.cumulative).toLocaleString()} ฿</td>
+                                                    <td class={`px-3 py-1 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
+                                                        {item.netProfit >= 0 ? '+' : ''}{Math.round(item.netProfit).toLocaleString()} ฿
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="border-t-2 border-slate-900 pt-3 font-sans text-[10px]">
+                                <p class="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
+                                <div class="grid grid-cols-3 gap-3 text-slate-600 font-bold">
+                                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p class="font-black text-slate-800 text-[11px]">ฝ่ายขายและการตลาด</p>
+                                        <p class="font-medium text-slate-500 mt-0.5">คุณมยุรา (จอย)</p>
+                                        <p class="text-blue-900">โทร: 062-289-2261</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p class="font-black text-slate-800 text-[11px]">ฝ่ายบริการลูกค้า</p>
+                                        <p class="font-medium text-slate-500 mt-0.5">คุณศุภลักษณ์ (อัฐ)</p>
+                                        <p class="text-blue-900">โทร: 092-492-7722</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p class="font-black text-slate-800 text-[11px]">ฝ่ายเทคนิคและวิศวกรรม</p>
+                                        <p class="font-medium text-slate-500 mt-0.5">คุณโมสต์</p>
+                                        <p class="text-blue-900">โทร: 099-563-6837</p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mt-3 text-[8px] text-slate-400 border-t border-slate-100 pt-1.5 font-normal">
+                                    <span>* ประมาณการผลตอบแทนบนฐานข้อมูลทางเศรษฐศาสตร์ของ TYE Solar ปี 2026</span>
+                                    <span>หน้า 2 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {showModal && !isRegistered && (
+                        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
+                            <div class="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
+                                <h3 class="text-2xl font-black mb-2 text-slate-800 italic">⭐ TYE Solar Audit</h3>
+                                <p class="text-slate-500 text-sm mb-8 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเข้าใช้งานระบบประมวลผลคำนวณจุดคุ้มทุน</p>
+                                <form onSubmit={handleSubmit} class="space-y-4">
+                                    <div class="text-left">
+                                        <label class="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-widest">Installation Province</label>
+                                        <select value={province} onChange={(e) => setProvince(e.target.value)} class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
+                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
+                                        </select>
+                                    </div>
+                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
+                                    <input type="submit" disabled={isLoading} value={isLoading ? 'Processing...' : 'เปิดระบบคำนวณโปรโมชั่น'} class={`w-full text-center block ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg cursor-pointer`} />
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
