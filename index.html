@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.6.5</title>
+    <title>TYE Solar ROI Expert Master - V6.6.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -26,7 +26,6 @@
         }
         /* ระบบล็อกกระดาษพิมพ์สากล บังคับสลับหน้าอัตโนมัติเมื่อสั่งพิมพ์เป็น PDF ขนาด A4 */
         @media print {
-            @page { size: A4; margin: 0; } /* ล็อกขนาดกระดาษและล้างระยะขอบเพี้ยนของเบราว์เซอร์ */
             .no-print { display: none !important; }
             .screen-layout { display: none !important; }
             .print-layout { position: static; display: block; width: 100% !important; max-width: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
@@ -323,9 +322,9 @@
                             ]
                         },
                         options: {
-                            /* ⭐ จุดสกัดบั๊กเดดล็อก PDF: ถ้าเป็นใบพิมพ์ล็อกขนาด (isPrintSize === true) ให้ปิด responsive คืนค่า false ทันที */
-                            responsive: !isPrintSize, 
+                            responsive: true,
                             maintainAspectRatio: false,
+                            /* ⭐ แก้ไขวิกฤตกราฟล้นขอบขวาตามภาพ image_acb1fe.png บังคับขอบขวาหดเข้ามา 35px เพื่อให้อยู่ในกรอบมนสมบูรณ์ */
                             layout: {
                                 padding: {
                                     right: isPrintSize ? 35 : 10,
@@ -570,7 +569,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span>💰 เงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT):</span>
+                                                <span>💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -652,7 +651,7 @@
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งความสูงสมดุลไม่หลุดหน้า */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งหดสเกลเข้ากรอบขวา */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm">
@@ -711,10 +710,10 @@
                                     </div>
                                 </div>
 
-                                {/* กล่องกราฟขนาดฟิตพอดีแผ่น 1 ถมพื้นที่ว่างสวยงามเรียบร้อย */}
+                                {/* กล่องกราฟแท่งแผ่นที่ 1 ขยายตัวถมพื้นที่ตามสัดส่วนภาพถ่ายเรียบร้อย */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-[75mm] w-[172mm] mx-auto relative">
+                                    <div className="h-[110mm] w-full relative">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
@@ -726,7 +725,7 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + ตาราง 25 ปีขาวสะอาดกระชับแน่นหนา + ล็อกตำแหน่งกล่องผู้ประสานงาน 3 คนท้ายแผ่นพอดี */}
+                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + ตาราง 25 ปีขาวสะอาด + ดึงกล่องคอนแทกต์วิศวกร 3 ท่านกลับมาล็อกตแหน่ง */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm">
@@ -757,11 +756,10 @@
                                         <tbody className="divide-y divide-slate-200 bg-white">
                                             {cashFlowData.map((item) => (
                                                 <tr key={item.year} className="bg-white">
-                                                    {/* ⭐ สั่งกระชับความสูงแถวด้วย py-[3px] มั่นใจว่าเนื้อหาจะหดอยู่หน้าสองพอดี ไม่ล้นไปหน้าสามตอนพรีวิว PDF */}
-                                                    <td className="px-3 py-[3px] font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
-                                                    <td className="px-3 py-[3px] text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
-                                                    <td className="px-3 py-[3px] text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
-                                                    <td className={`px-3 py-[3px] font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
+                                                    <td className="px-3 py-1 font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
+                                                    <td className="px-3 py-1 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
+                                                    <td className="px-3 py-1 text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
+                                                    <td className={`px-3 py-1 font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
                                                         {item.netProfit >= 0 ? "+" : ""}{Math.round(item.netProfit).toLocaleString()} บ.
                                                     </td>
                                                 </tr>
@@ -771,7 +769,7 @@
                                 </div>
                             </div>
 
-                            {/* กลุ่มข้อมูลกล่องรายชื่อเบอร์โทรผู้ประสานงาน 3 คนกลับมาแสดงผลสวยงามมั่นคง */}
+                            {/* ⭐ ดึงกลุ่มข้อมูลกล่องคอนแทกต์เบอร์โทรศัพท์ผู้ประสานงานทั้ง 3 ท่านกลับมาวางล็อกพิกเซลอย่างมั่นคงเหนือก้น Footer หน้าสอง */}
                             <div className="border-t border-slate-200 pt-3 font-sans text-[10px]">
                                 <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
                                 <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold mb-3">
@@ -824,7 +822,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />); // ⭐ แก้ไขตัวครอบฟังก์ชันกลับมาเป็น JSX Element สลัดอาการจอขาวหน้าเว็บทิ้ง 100% ครับ
+        root.render(<App />);
     </script>
 </body>
 </html>
