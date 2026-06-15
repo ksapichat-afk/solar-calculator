@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.7.1</title>
+    <title>TYE Solar ROI Expert Master - V6.6.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -323,6 +323,7 @@
                             ]
                         },
                         options: {
+                            /* ⭐ จุดสกัดบั๊กเดดล็อก PDF: ถ้าเป็นใบพิมพ์ล็อกขนาด (isPrintSize === true) ให้ปิด responsive คืนค่า false ทันที */
                             responsive: !isPrintSize, 
                             maintainAspectRatio: false,
                             layout: {
@@ -358,18 +359,14 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100% ฝังระบบปลดล็อก Hotlink ข้ามเครื่อง) */}
+                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
-                        <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                {/* ⭐ ฝัง referrerPolicy ปลดล็อกภาพบกพร่องบนระบบหน้าจอคอมพิวเตอร์ */}
-                                <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
-                                <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
-                                    <span>⭐ TYE SOLARMASTER</span>
-                                    <span className="text-slate-400 font-normal hidden md:inline">|</span>
-                                    <span className="text-xs md:text-sm text-slate-300">บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</span>
-                                </h1>
-                            </div>
+                        <header className="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
+                            <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
+                                <span>⭐ TYE SOLARMASTER</span>
+                                <span className="text-slate-400 font-normal hidden md:inline">|</span>
+                                <span className="text-xs md:text-sm text-slate-300">บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</span>
+                            </h1>
                             <button type="button" onClick={executePrint} className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-xl text-xs md:text-sm shadow-md active:scale-95 transition-all cursor-pointer">
                                 🖨️ สั่งพิมพ์เล่มรายงาน
                             </button>
@@ -573,7 +570,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span>💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
+                                                <span>💰 เงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -655,19 +652,12 @@
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ปลดล็อกภาพโลโก้ + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งความสูงสมดุลไม่หลุดหน้า */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัทกล่องสีส้มอ่อน + ข้อมูลลูกค้าครบวงจร + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งความสูงสมดุลไม่หลุดหน้า */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm text-center">
-                                    
-                                    {/* 📦 ปลดล็อก Hotlink รูปภาพแผ่นพรีวิวพิมพ์ใบที่ 1 */}
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
-                                        <span className="text-[9px] font-black text-slate-800 tracking-widest uppercase mt-1">TYE SOLARMASTER TECHNICAL FINANCING</span>
-                                    </div>
-
-                                    <h2 className="text-base font-black text-slate-900 tracking-tight">รายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
-                                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
+                                <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm">
+                                    <h2 className="text-base font-black text-slate-900 tracking-tight text-center">รายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
+                                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider text-center mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
                                 </div>
 
                                 <div className="mb-5">
@@ -721,6 +711,7 @@
                                     </div>
                                 </div>
 
+                                {/* กล่องกราฟขนาดฟิตพอดีแผ่น 1 ถมพื้นที่ว่างสวยงามเรียบร้อย */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
                                     <div className="h-[75mm] w-[172mm] mx-auto relative">
@@ -735,18 +726,11 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวบริษัทติดโลโก้จริง + ตาราง Cash Flow 25 ปีขาวสะอาดกระชับแน่นหนา + รายชื่อวิศวกร 3 ท่าน */}
+                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวส้มอ่อน + ตาราง 25 ปีขาวสะอาดกระชับแน่นหนา + ล็อกตำแหน่งกล่องผู้ประสานงาน 3 คนท้ายแผ่นพอดี */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm text-center">
-                                    
-                                    {/* 📦 ปลดล็อก Hotlink รูปภาพแผ่นพรีวิวพิมพ์ใบที่ 2 */}
-                                    <div className="flex items-center justify-center gap-2 mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
-                                        <span className="text-[10px] font-extrabold text-slate-900 tracking-widest uppercase">TYE SOLAR LIFETIME REPORT</span>
-                                    </div>
-
-                                    <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
+                                <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm">
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-widest text-center">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -773,6 +757,7 @@
                                         <tbody className="divide-y divide-slate-200 bg-white">
                                             {cashFlowData.map((item) => (
                                                 <tr key={item.year} className="bg-white">
+                                                    {/* ⭐ สั่งกระชับความสูงแถวด้วย py-[3px] มั่นใจว่าเนื้อหาจะหดอยู่หน้าสองพอดี ไม่ล้นไปหน้าสามตอนพรีวิว PDF */}
                                                     <td className="px-3 py-[3px] font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
                                                     <td className="px-3 py-[3px] text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
                                                     <td className="px-3 py-[3px] text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
@@ -786,6 +771,7 @@
                                 </div>
                             </div>
 
+                            {/* กลุ่มข้อมูลกล่องรายชื่อเบอร์โทรผู้ประสานงาน 3 คนกลับมาแสดงผลสวยงามมั่นคง */}
                             <div className="border-t border-slate-200 pt-3 font-sans text-[10px]">
                                 <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
                                 <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold mb-3">
@@ -838,7 +824,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />); 
+        root.render(<App />); // ⭐ แก้ไขตัวครอบฟังก์ชันกลับมาเป็น JSX Element สลัดอาการจอขาวหน้าเว็บทิ้ง 100% ครับ
     </script>
 </body>
 </html>
