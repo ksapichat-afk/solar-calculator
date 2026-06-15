@@ -19,13 +19,15 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* 🖨️ ⭐ เพิ่มระบบจัดหน้ากระดาษสำหรับพิมพ์ PDF สวยงามระดับพรีเมียม */
+        /* 🖨️ ⭐ ระบบจัดสัดส่วนแบบฟอร์มเล่มรายงานสากลสำหรับพิมพ์ออกเป็นไฟล์ PDF */
         @media print {
             .no-print { display: none !important; }
-            body { background-color: #ffffff; padding: 0; margin: 0; }
-            main { max-width: 100% !important; padding: 0 !important; }
+            body { background-color: #ffffff; padding: 0; margin: 0; color: #000000; }
+            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
             .animate-fade-in { animation: none !important; transform: none !important; }
+            thead { display: table-header-group !important; } /* สั่งหัวตารางขึ้นซ้ำอัตโนมัติเมื่อตัดหน้า */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            input, select { background: transparent !important; border: none !important; p: 0 !important; appearance: none !important; font-weight: bold !important; color: #000000 !important; }
         }
     </style>
 </head>
@@ -175,7 +177,9 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom' } },
                         scales: {
-                            y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() + ' บ.' } }
+                            // ⭐ ล็อกฟอนต์ Sarabun เพื่อแก้ปัญหาอักษรต่างดาวตอนปริ้นลงเล่มรายงาน PDF
+                            y: { beginAtZero: true, ticks: { font: { family: 'Sarabun' }, callback: (v) => v.toLocaleString() + ' บ.' } },
+                            x: { ticks: { font: { family: 'Sarabun' } } }
                         }
                     }
                 });
@@ -204,7 +208,7 @@
             const [isLoading, setIsLoading] = useState(false);
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
-            // สเตตเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (Default = 0 ตามคำสั่งซื้อ)
+            // สเตตเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (Default = 0)
             const [ac1Qty, setAc1Qty] = useState(0);
             const [ac1Hrs, setAc1Hrs] = useState(0);
             const [ac2Qty, setAc2Qty] = useState(0);
@@ -374,21 +378,37 @@
                 }
             };
 
-            // ⭐ ฟังก์ชันเปิดกล่อง Print PDF ของบราวเซอร์โดยตรง
-            const executePrint = () => {
-                window.print();
-            };
-
             return (
                 <div class="min-h-screen flex flex-col">
-                    <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
+                    <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center no-print">
                         <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
                         <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.3</span>
                     </header>
 
                     <main class="max-w-4xl mx-auto p-4 md:p-8 w-full flex-grow text-slate-800">
                         <section class="bg-white rounded-[2rem] shadow-2xl p-6 md:p-10 mb-8 border border-slate-100 animate-fade-in">
-                            <div class="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-8">
+                            
+                            <!-- 📄 ⭐ ส่วนหัวรายงานทางการพิมพ์ขอกู้ธนาคาร (จะโผล่มาเฉพาะตอนกดสั่งพิมพ์ PDF เท่านั้น) -->
+                            <div class="hidden print:block mb-8 border-b-4 border-slate-900 pb-5 font-sans">
+                                <div class="flex justify-between items-end mb-4">
+                                    <div>
+                                        <h2 class="text-xl font-black text-slate-900 tracking-tight">เล่มรายงานวิเคราะห์ผลประโยชน์การลงทุนระบบโซล่าเซลล์</h2>
+                                        <p class="text-xs text-slate-500 mt-0.5">Solar Investment Financial Audit & Engineering Proposal</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs font-black text-blue-900">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
+                                        <p class="text-[10px] text-slate-400">Premium Solution Expert</p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-2xl p-4 gap-y-2 text-xs font-bold text-slate-700">
+                                    <div>เสนอแก่ลูกค้า (Customer): <span class="text-slate-950 font-black">{formData.name || '-'}</span></div>
+                                    <div>สถานที่ติดตั้ง (Location): <span class="text-slate-950 font-black">จังหวัด {province}</span></div>
+                                    <div>เบอร์โทรศัพท์ (Contact Tel): <span class="text-slate-950 font-black">{formData.tel || '-'}</span></div>
+                                    <div>ประมาณการฐาน (Basis): <span class="text-slate-950 font-black">ค่าไฟเดือนละ {Number(bill).toLocaleString()} บาท</span></div>
+                                </div>
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-8 no-print">
                                 <div class="space-y-1">
                                     <label class="font-bold text-slate-700 text-sm ml-1">1. จังหวัดที่ติดตั้ง:</label>
                                     <select value={province} onChange={(e) => setProvince(e.target.value)}
@@ -477,117 +497,117 @@
                                             class="w-full h-2.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500" />
                                     </div>
                                 </div>
+                            </div>
 
-                                {systemType === "hybrid" && (
-                                    <div class="md:col-span-2 p-6 bg-blue-50/60 rounded-[2rem] border border-blue-100 space-y-6 animate-fade-in">
-                                        
-                                        {/* ฝังโมดูลย่อยคำนวณโหลดเครื่องใช้ไฟฟ้าหัวค่ำเพิ่มเข้าไปในกล่องเดิมอย่างกลมกลืน ตั้งค่าฐานเป็น 0 ตามสั่ง */}
-                                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                                            <label class="font-black text-slate-800 text-xs uppercase tracking-wider block mb-1">
-                                                🌇 กล่องคำนวณโหลดเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (17:00 - 22:00 น.)
-                                            </label>
-                                            <div class="overflow-x-auto custom-scrollbar">
-                                                <table class="w-full text-left text-xs min-w-[450px]">
-                                                    <thead>
-                                                        <tr class="text-slate-400 border-b border-slate-100">
-                                                            <th class="pb-2 font-semibold">ประเภทเครื่องใช้ไฟฟ้า</th>
-                                                            <th class="pb-2 font-semibold text-center w-16">วัตต์</th>
-                                                            <th class="pb-2 font-semibold text-center w-16">จำนวน</th>
-                                                            <th class="pb-2 font-semibold text-center w-20">ชม. (0-5)</th>
-                                                            <th class="pb-2 font-semibold text-right w-20">รวม Wh</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="divide-y divide-slate-50 font-medium text-slate-700">
-                                                        <tr>
-                                                            <td class="py-2">❄️ แอร์ 9k-12k BTU</td>
-                                                            <td class="py-2 text-center text-slate-400">900W</td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={ac1Qty} onChange={(e) => setAc1Qty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={ac1Hrs} onChange={(e) => setAc1Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-right font-bold text-slate-500">{(900 * ac1Qty * ac1Hrs).toLocaleString()} Wh</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="py-2">❄️ แอร์ 18k-24k BTU</td>
-                                                            <td class="py-2 text-center text-slate-400">1800W</td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={ac2Qty} onChange={(e) => setAc2Qty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={ac2Hrs} onChange={(e) => setAc2Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-right font-bold text-slate-500">{(1800 * ac2Qty * ac2Hrs).toLocaleString()} Wh</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="py-2">🧊 ตู้เย็น (หักเฉลี่ยกำลังไฟ)</td>
-                                                            <td class="py-2 text-center text-slate-400">200W</td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={refQty} onChange={(e) => setRefQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={refHrs} onChange={(e) => setRefHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-right font-bold text-slate-500">{(200 * refQty * refHrs).toLocaleString()} Wh</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="py-2">🚰 ปั๊มน้ำอัตโนมัติ (ช่วงอาบน้ำ)</td>
-                                                            <td class="py-2 text-center text-slate-400">500W</td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={pumpQty} onChange={(e) => setPumpQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={pumpHrs} onChange={(e) => setPumpHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-right font-bold text-slate-500">{(500 * pumpQty * pumpHrs).toLocaleString()} Wh</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="py-2">📺 ทีวี และเครื่องเสียง</td>
-                                                            <td class="py-2 text-center text-slate-400">150W</td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={tvQty} onChange={(e) => setTvQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-center">
-                                                                <input type="number" value={tvHrs} onChange={(e) => setTvHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
-                                                            </td>
-                                                            <td class="py-2 text-right font-bold text-slate-500">{(150 * tvQty * tvHrs).toLocaleString()} Wh</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl gap-1">
-                                                <span class="text-slate-600 font-semibold">พลังงานรวมช่วงหัวค่ำ: <strong class="text-orange-600">{eveningTotalWh.toLocaleString()} Wh</strong></span>
-                                                <span class="text-slate-800 font-bold">ขนาดแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%): <strong class="text-blue-700">{minBatterySize.toFixed(2)} kWh</strong></span>
-                                            </div>
+                            {/* 📂 แสดงโครงสร้างกล่องคำนวณโหลดเครื่องใช้ไฟฟ้าและแบรนด์แบตเตอรี่ในส่วนสิ่งพิมพ์รายงานด้วย */}
+                            {systemType === "hybrid" && (
+                                <div class="md:col-span-2 p-6 bg-blue-50/60 rounded-[2rem] border border-blue-100 space-y-6 mb-6">
+                                    
+                                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                                        <label class="font-black text-slate-800 text-xs uppercase tracking-wider block mb-1">
+                                            🌇 ตารางการคำนวณสำรองโหลดเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (17:00 - 22:00 น.)
+                                        </label>
+                                        <div class="overflow-x-auto custom-scrollbar">
+                                            <table class="w-full text-left text-xs min-w-[450px]">
+                                                <thead>
+                                                    <tr class="text-slate-400 border-b border-slate-100">
+                                                        <th class="pb-2 font-semibold">ประเภทเครื่องใช้ไฟฟ้า</th>
+                                                        <th class="pb-2 font-semibold text-center w-16">วัตต์</th>
+                                                        <th class="pb-2 font-semibold text-center w-16">จำนวน</th>
+                                                        <th class="pb-2 font-semibold text-center w-20">ชม. (0-5)</th>
+                                                        <th class="pb-2 font-semibold text-right w-20">รวม Wh</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-50 font-medium text-slate-700">
+                                                    <tr>
+                                                        <td class="py-2">❄️ แอร์ 9k-12k BTU</td>
+                                                        <td class="py-2 text-center text-slate-400">900W</td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={ac1Qty} onChange={(e) => setAc1Qty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={ac1Hrs} onChange={(e) => setAc1Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-right font-bold text-slate-500">{(900 * ac1Qty * ac1Hrs).toLocaleString()} Wh</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="py-2">❄️ แอร์ 18k-24k BTU</td>
+                                                        <td class="py-2 text-center text-slate-400">1800W</td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={ac2Qty} onChange={(e) => setAc2Qty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={ac2Hrs} onChange={(e) => setAc2Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-right font-bold text-slate-500">{(1800 * ac2Qty * ac2Hrs).toLocaleString()} Wh</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="py-2">🧊 ตู้เย็น (หักเฉลี่ยกำลังไฟ)</td>
+                                                        <td class="py-2 text-center text-slate-400">200W</td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={refQty} onChange={(e) => setRefQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={refHrs} onChange={(e) => setRefHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-right font-bold text-slate-500">{(200 * refQty * refHrs).toLocaleString()} Wh</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="py-2">🚰 ปั๊มน้ำอัตโนมัติ (ช่วงอาบน้ำ)</td>
+                                                        <td class="py-2 text-center text-slate-400">500W</td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={pumpQty} onChange={(e) => setPumpQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={pumpHrs} onChange={(e) => setPumpHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-right font-bold text-slate-500">{(500 * pumpQty * pumpHrs).toLocaleString()} Wh</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="py-2">📺 ทีวี และเครื่องเสียง</td>
+                                                        <td class="py-2 text-center text-slate-400">150W</td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={tvQty} onChange={(e) => setTvQty(Math.max(0, parseInt(e.target.value) || 0))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-center">
+                                                            <input type="number" value={tvHrs} onChange={(e) => setTvHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:outline-none focus:border-blue-500" />
+                                                        </td>
+                                                        <td class="py-2 text-right font-bold text-slate-500">{(150 * tvQty * tvHrs).toLocaleString()} Wh</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
-
-                                        <div>
-                                            <label class="font-black text-blue-950 text-sm block mb-2">🔋 เลือกระดับที่ 1: แบรนด์แบตเตอรี่และการรับประกัน</label>
-                                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                {Object.keys(BATTERY_OPTIONS).map((b) => (
-                                                    <button type="button" key={b} onClick={() => setBatteryBrand(b)}
-                                                        class={`p-3 text-xs rounded-xl border-2 font-bold transition-all text-center ${batteryBrand === b ? 'border-blue-800 bg-blue-900 text-white shadow-md' : 'border-slate-200 bg-white text-slate-500'}`}>
-                                                        {b}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="font-black text-blue-950 text-sm block mb-2">⚡ เลือกระดับที่ 2: ขนาดความจุสำรอง (kWh) สำหรับช่วงค่ำ</label>
-                                            <div class="grid grid-cols-3 gap-2">
-                                                {(BATTERY_OPTIONS[batteryBrand] || []).map((opt, idx) => (
-                                                    <button type="button" key={idx} onClick={() => setBatteryIndex(idx)}
-                                                        class={`p-3 text-sm rounded-xl border-2 font-black transition-all flex flex-col items-center justify-center ${batteryIndex === idx ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-md' : 'border-slate-200 bg-white text-slate-400'}`}>
-                                                        <span>{opt.cap}</span>
-                                                        <span class="text-[10px] font-bold text-slate-400 mt-1">+{opt.price.toLocaleString()} บ.</span>
-                                                    </button>
-                                                ))}
-                                            </div>
+                                        <div class="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl gap-1">
+                                            <span class="text-slate-600 font-semibold">พลังงานรวมช่วงหัวค่ำ: <strong class="text-orange-600">{eveningTotalWh.toLocaleString()} Wh</strong></span>
+                                            <span class="text-slate-800 font-bold">ขนาดแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%): <strong class="text-blue-700">{minBatterySize.toFixed(2)} kWh</strong></span>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+
+                                    <div class="no-print">
+                                        <label class="font-black text-blue-950 text-sm block mb-2">🔋 เลือกระดับที่ 1: แบรนด์แบตเตอรี่และการรับประกัน</label>
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {Object.keys(BATTERY_OPTIONS).map((b) => (
+                                                <button type="button" key={b} onClick={() => setBatteryBrand(b)}
+                                                    class={`p-3 text-xs rounded-xl border-2 font-bold transition-all text-center ${batteryBrand === b ? 'border-blue-800 bg-blue-900 text-white shadow-md' : 'border-slate-200 bg-white text-slate-500'}`}>
+                                                    {b}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div class="no-print">
+                                        <label class="font-black text-blue-950 text-sm block mb-2">⚡ เลือกระดับที่ 2: ขนาดความจุสำรอง (kWh) สำหรับช่วงค่ำ</label>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            {(BATTERY_OPTIONS[batteryBrand] || []).map((opt, idx) => (
+                                                <button type="button" key={idx} onClick={() => setBatteryIndex(idx)}
+                                                    class={`p-3 text-sm rounded-xl border-2 font-black transition-all flex flex-col items-center justify-center ${batteryIndex === idx ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-md' : 'border-slate-200 bg-white text-slate-400'}`}>
+                                                    <span>{opt.cap}</span>
+                                                    <span class="text-[10px] font-bold text-slate-400 mt-1">+{opt.price.toLocaleString()} บ.</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {isPhaseWarning && (
                                 <div class="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-700 flex items-start gap-3 animate-fade-in">
@@ -665,7 +685,7 @@
                                 <div class="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg animate-fade-in">
                                     <div class="bg-slate-800 p-5 text-white flex justify-between items-center">
                                         <h4 class="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard ({matchedPackage?.name || 'Fixed Pack'})</h4>
-                                        <span class="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold">Audited Report</span>
+                                        <span class="text-[10px] bg-blue-600 px-3 py-1 rounded-full text-white font-bold no-print">Audited Report</span>
                                     </div>
                                     <div class="overflow-x-auto custom-scrollbar">
                                         <table class="w-full text-left text-sm">
@@ -683,6 +703,7 @@
                                                         <td class="px-6 py-4 font-bold text-slate-700">{item.year}</td>
                                                         <td class="px-6 py-4 text-slate-600 font-medium">{item.yearlySaving.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
                                                         <td class="px-6 py-4 text-slate-600 font-medium">{item.cumulative.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
+                                                        {/* ⭐ แก้ไขล้างหน่วยเงินต่างดาวให้คุมโทนเป็นตัวสัญลักษณ์ ฿ สวยงามคงเส้นคงวา */}
                                                         <td class={`px-6 py-4 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
                                                             {item.netProfit >= 0 ? '+' : ''}{item.netProfit.toLocaleString(undefined, {maximumFractionDigits:0})} ฿
                                                         </td>
@@ -694,16 +715,37 @@
                                 </div>
                             </div>
 
-                            {/* ⭐ อัปเกรดปุ่มกดเดิมให้เรียกใช้ฟังก์ชัน Print ของระบบ และสั่งซ่อนปุ่มนี้อัตโนมัติเมื่อพิมพ์ลง PDF */}
+                            <!-- 🛠️ ⭐ บล็อกข้อมูลทีมงานผู้ประสานงานโครงการวิศวกรรม (จะพิมพ์ออกมาปิดท้ายเล่มรายงาน PDF) -->
+                            <div class="hidden print:block mt-12 pt-6 border-t-2 border-slate-200 font-sans text-xs">
+                                <p class="font-black text-slate-900 uppercase tracking-widest mb-3">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
+                                <div class="grid grid-cols-3 gap-4 text-slate-600">
+                                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <p class="font-black text-slate-800">ฝ่ายขายและการตลาด</p>
+                                        <p class="mt-1">คุณมยุรา (จอย)</p>
+                                        <p class="font-bold text-blue-900">โทร: 062-289-2261</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <p class="font-black text-slate-800">ฝ่ายบริการลูกค้า</p>
+                                        <p class="mt-1">คุณศุภลักษณ์ (อัฐ)</p>
+                                        <p class="font-bold text-blue-900">โทร: 092-492-7722</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <p class="font-black text-slate-800">ฝ่ายเทคนิคและวิศวกรรม</p>
+                                        <p class="mt-1">คุณโมสต์</p>
+                                        <p class="font-bold text-blue-900">โทร: 099-563-6837</p>
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-slate-400 mt-4 text-center">เอกสารฉบับนี้จัดทำโดยระบบอัตโนมัติของบริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด สงวนลิขสิทธิ์ตามกฎหมาย</p>
+                            </div>
+
                             <div class="mt-8 pt-6 border-t border-slate-100 text-center no-print">
                                 <button type="button" onClick={executePrint}
                                     class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl hover:shadow-blue-200 active:scale-[0.98] transition-all text-base cursor-pointer tracking-wider">
-                                    🖨️ สั่งพิมพ์รายงานผลประโยชน์การลงทุน (Save to PDF)
+                                    🖨️ สั่งพิมพ์เล่มรายงานข้อเสนอโครงการ (Save to PDF Report)
                                 </button>
                             </div>
                         </section>
 
-                        {/* กล่องติดต่อด้านล่าง (ใส่คลาส no-print เพื่อไม่ให้หลุดเข้าไปเกะกะในไฟล์ PDF สรุปงานส่งลูกค้า) */}
                         <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12 animate-fade-in no-print">
                             <div class="border-b border-slate-800 pb-4 text-center md:text-left">
                                 <h4 class="font-bold text-xl text-amber-400">⚡ สนใจขอเสนอราคาโปรโมชั่นพิเศษหรือนัดสำรวจหน้างาน</h4>
