@@ -18,6 +18,15 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* 🖨️ ⭐ เพิ่มระบบจัดหน้ากระดาษสำหรับพิมพ์ PDF สวยงามระดับพรีเมียม */
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: #ffffff; padding: 0; margin: 0; }
+            main { max-width: 100% !important; padding: 0 !important; }
+            .animate-fade-in { animation: none !important; transform: none !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -195,7 +204,7 @@
             const [isLoading, setIsLoading] = useState(false);
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
-            // ⭐ เพิ่มสเตตเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (Default = 0 ตามคำสั่งซื้อ)
+            // สเตตเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (Default = 0 ตามคำสั่งซื้อ)
             const [ac1Qty, setAc1Qty] = useState(0);
             const [ac1Hrs, setAc1Hrs] = useState(0);
             const [ac2Qty, setAc2Qty] = useState(0);
@@ -221,7 +230,7 @@
                 return { day: 4.2, evening: 4.2, night: 4.2, avg: 4.2 };
             }, [tariffType, dayUsage, eveningUsage, nightUsage]);
 
-            // ⭐ คำนวณพลังงานรวมช่วงหัวค่ำ (Wh) จากตารางกรอกข้อมูล
+            // คำนวณพลังงานรวมช่วงหัวค่ำ (Wh) จากตารางกรอกข้อมูล
             const eveningTotalWh = useMemo(() => {
                 return (900 * ac1Qty * ac1Hrs) +
                        (1800 * ac2Qty * ac2Hrs) +
@@ -230,7 +239,7 @@
                        (150 * tvQty * tvHrs);
             }, [ac1Qty, ac1Hrs, ac2Qty, ac2Hrs, refQty, refHrs, pumpQty, pumpHrs, tvQty, tvHrs]);
 
-            // ⭐ สรุปขนาดความจุแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%)
+            // สรุปขนาดความจุแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%)
             const minBatterySize = useMemo(() => {
                 return eveningTotalWh / (1000 * 0.8);
             }, [eveningTotalWh]);
@@ -365,6 +374,11 @@
                 }
             };
 
+            // ⭐ ฟังก์ชันเปิดกล่อง Print PDF ของบราวเซอร์โดยตรง
+            const executePrint = () => {
+                window.print();
+            };
+
             return (
                 <div class="min-h-screen flex flex-col">
                     <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
@@ -467,7 +481,7 @@
                                 {systemType === "hybrid" && (
                                     <div class="md:col-span-2 p-6 bg-blue-50/60 rounded-[2rem] border border-blue-100 space-y-6 animate-fade-in">
                                         
-                                        {/* ⭐ ฝังโมดูลย่อยคำนวณโหลดเครื่องใช้ไฟฟ้าหัวค่ำเพิ่มเข้าไปในกล่องเดิมอย่างกลมกลืน ตั้งค่าฐานเป็น 0 ตามสั่ง */}
+                                        {/* ฝังโมดูลย่อยคำนวณโหลดเครื่องใช้ไฟฟ้าหัวค่ำเพิ่มเข้าไปในกล่องเดิมอย่างกลมกลืน ตั้งค่าฐานเป็น 0 ตามสั่ง */}
                                         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                                             <label class="font-black text-slate-800 text-xs uppercase tracking-wider block mb-1">
                                                 🌇 กล่องคำนวณโหลดเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (17:00 - 22:00 น.)
@@ -679,9 +693,18 @@
                                     </div>
                                 </div>
                             </div>
+
+                            {/* ⭐ อัปเกรดปุ่มกดเดิมให้เรียกใช้ฟังก์ชัน Print ของระบบ และสั่งซ่อนปุ่มนี้อัตโนมัติเมื่อพิมพ์ลง PDF */}
+                            <div class="mt-8 pt-6 border-t border-slate-100 text-center no-print">
+                                <button type="button" onClick={executePrint}
+                                    class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl hover:shadow-blue-200 active:scale-[0.98] transition-all text-base cursor-pointer tracking-wider">
+                                    🖨️ สั่งพิมพ์รายงานผลประโยชน์การลงทุน (Save to PDF)
+                                </button>
+                            </div>
                         </section>
 
-                        <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12 animate-fade-in">
+                        {/* กล่องติดต่อด้านล่าง (ใส่คลาส no-print เพื่อไม่ให้หลุดเข้าไปเกะกะในไฟล์ PDF สรุปงานส่งลูกค้า) */}
+                        <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl space-y-6 mb-12 animate-fade-in no-print">
                             <div class="border-b border-slate-800 pb-4 text-center md:text-left">
                                 <h4 class="font-bold text-xl text-amber-400">⚡ สนใจขอเสนอราคาโปรโมชั่นพิเศษหรือนัดสำรวจหน้างาน</h4>
                                 <p class="text-slate-400 text-sm mt-1">ทีมงานวิศวกร TYE Solar พร้อมดูแลออกแบบระบบและคำนวณจุดคุ้มทุนจริงหน้างานให้ฟรี</p>
