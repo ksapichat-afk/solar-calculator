@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.4.0</title>
+    <title>TYE Solar ROI Expert Master - V6.5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -19,11 +19,12 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* ระบบซ่อนเล่มรายงานพิมพ์จริงไว้หลังฉาก และจะกางมิติจริงขนาด 210mm รอสั่งพิมพ์ออก A4 */
+        /* ระบบจัดเลย์เอาต์หน้ากระดาษพรีวิวจำลองขนาด A4 บนหน้าจอคอมพิวเตอร์ */
         @media screen {
             .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
             .screen-layout { display: block; }
         }
+        /* ระบบล็อกกระดาษพิมพ์สากล บังคับสลับหน้าอัตโนมัติเมื่อสั่งพิมพ์เป็น PDF ขนาด A4 */
         @media print {
             .no-print { display: none !important; }
             .screen-layout { display: none !important; }
@@ -146,7 +147,6 @@
 
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
-            const [isLoading, setIsLoading] = useState(false);
             const [formData, setFormData] = useState({ name: '', tel: '' });
 
             const [ac1Qty, setAc1Qty] = useState(0);
@@ -349,7 +349,7 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI ดั้งเดิมเวอร์ชัน 5.9.3 เพิ่มปุ่มสั่งพิมพ์มุมขวาบน) */}
+                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                             <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
@@ -514,6 +514,12 @@
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                                
+                                                {/* ⭐ 1. กู้คืนกล่องแสดง watt พลังงานรวมช่วงหัวค่ำด้านล่างตารางหน้าแรกให้กลับมาทำงานสมบูรณ์ */}
+                                                <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl gap-1">
+                                                    <span className="text-slate-600 font-semibold">พลังงานรวมช่วงหัวค่ำ: <strong className="text-orange-600">{eveningTotalWh.toLocaleString()} Wh</strong></span>
+                                                    <span className="text-slate-800 font-bold">ขนาดแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%): <strong className="text-blue-700">{minBatterySize.toFixed(2)} kWh</strong></span>
+                                                </div>
                                             </div>
 
                                             <div>
@@ -555,7 +561,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span className="text-slate-700 text-sm">💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
+                                                <span>💰 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -614,7 +620,7 @@
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50">
                                                     {cashFlowData.map((item) => (
-                                                        <tr key={item.year} className={`hover:bg-slate-50/50 transition-colors ${item.netProfit >= 0 ? 'bg-emerald-50/20' : ''}`}>
+                                                        <tr key={item.year} className="hover:bg-slate-50/50 transition-colors">
                                                             <td className="px-6 py-4 font-bold text-slate-700">{item.year}</td>
                                                             <td className="px-6 py-4 text-slate-600 font-medium">{item.yearlySaving.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
                                                             <td className="px-6 py-4 text-slate-600 font-medium">{item.cumulative.toLocaleString(undefined, {maximumFractionDigits:0})} บ.</td>
@@ -633,11 +639,11 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนรายงานสำหรับพิมพ์ (Print Layout): ซ่อนบนหน้าจอเว็บ แต่ทำงานอัตโนมัติ 2 หน้ากระดาษเมื่อกดพิมพ์
+                        📄 🏢 ส่วนเล่มรายงานทางการสำหรับพิมพ์ (Print Layout): ซ่อนบนจอเว็บ แต่เปิดรันอัตโนมัติเมื่อคีย์สั่งปริ้น
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัท + ข้อมูลลูกค้า + กำลังผลิต + ราคาแพ็คเกจ + ย้ายกราฟมาแผ่นนี้ */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัท + ข้อมูลลูกค้า + กำลังผลิต + ราคาแพ็คเกจ + แผงกราฟแท่งจัดขนาดลงตัวพอดี */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="border-b-4 border-slate-900 pb-4 mb-5">
@@ -702,10 +708,10 @@
                                     </div>
                                 </div>
 
-                                {/* ⭐ ย้ายแผงภูมิแท่ง Financial Chart ขึ้นมาวาดผลประโยชน์ไว้ในกระดาษแผ่นแรกตามคำสั่งซื้อ */}
+                                {/* ⭐ 3. จัดขนาดความสูงกราฟแท่งบนแผ่นที่ 1 ให้เป็นสเกลกระชับ h-40 เพื่อไม่ให้ดันเนื้อหาตกหน้าแรก */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl">
-                                    <p className="text-[10px] font-black text-slate-700 text-center mb-1">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-44 w-full relative">
+                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <div className="h-40 w-full relative">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
@@ -713,11 +719,21 @@
                             <div className="text-[9px] text-slate-400 font-medium text-center border-t border-slate-100 pt-2">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : ย้ายสรุปผลตอบแทน + เปลี่ยนตารางกระแสเงินสดให้กางเต็ม 1-25 ปี + รายชื่อทีมวิศวกร */}
+                        {/* 📄 รายงานแผ่นที่ 2 : เพิ่มโปรไฟล์ระบบไฟฟ้า/มิเตอร์ลูกค้าด้านบน + กางตาราง Cash Flow เต็ม 1-25 ปี + เคลียร์แถบสีฟ้า */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="border-b border-slate-200 pb-1 mb-3">
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจกแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
+                                </div>
+
+                                {/* ⭐ 2. เพิ่มกล่องสรุปโพรไฟล์ระบบไฟฟ้าและสเปกมิเตอร์ของลูกค้าในส่วนบนสุดของหน้าที่ 2 */}
+                                <div className="mb-4">
+                                    <div className="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-3 gap-y-1 text-[11px] font-bold text-slate-700">
+                                        <div>ชื่อลูกค้าผู้รับข้อเสนอ: <span className="text-slate-950 font-black">{formData.name || '-'}</span></div>
+                                        <div>ระบบไฟฟ้าอาคารหน้างาน: <span className="text-slate-950 font-black">{phase === "1" ? "ระบบไฟ 1 เฟส (1 Phase)" : "ระบบไฟ 3 เฟส (3 Phase)"}</span></div>
+                                        <div>เบอร์โทรศัพท์ติดต่อ: <span className="text-slate-950 font-black">{formData.tel || '-'}</span></div>
+                                        <div>อัตราการคิดค่าไฟฟ้าเดิม: <span className="text-slate-950 font-black">{tariffType === "tou" ? "อัตราไฟฟ้า TOU (On/Off-Peak)" : "อัตราไฟฟ้าปกติ (Flat Rate)"}</span></div>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 mb-3">
@@ -732,7 +748,7 @@
                                 </div>
 
                                 <div className="mb-3">
-                                    {/* ⭐ ปรับฟอร์แมตตารางหน้าสองให้แจกแจงข้อมูลเต็มสตรีมครบถ้วนทุกปีตั้งแต่ปีที่ 1 ถึง 25 ไม่มีละแถว */}
+                                    {/* ⭐ 4. ปรับตารางแจกแจงข้อมูลครบทุกปี 1-25 และล้างแถบสีฟ้าอ่อนไฮไลต์ออกทั้งหมดให้กลายเป็นสีขาวสะอาดสากล */}
                                     <table className="w-full text-left text-[10px] border border-slate-200 rounded-xl overflow-hidden font-medium">
                                         <thead className="bg-slate-900 text-white font-bold text-[8px] uppercase">
                                             <tr>
@@ -744,11 +760,10 @@
                                         </thead>
                                         <tbody className="divide-y divide-slate-200 bg-white">
                                             {cashFlowData.map((item) => (
-                                                <tr key={item.year} className={item.netProfit >= 0 ? "bg-emerald-50/15" : ""}>
+                                                <tr key={item.year} className="bg-white">
                                                     <td className="px-3 py-0.5 font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
                                                     <td className="px-3 py-0.5 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
                                                     <td className="px-3 py-0.5 text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
-                                                    {/* ⭐ รีไวส์แก้นามสกุลหน่วยเงินให้เป็นภาษาไทยคำว่า "บ." ตรงกันสม่ำเสมอตามสั่งครบ 100% */}
                                                     <td className={`px-3 py-0.5 font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
                                                         {item.netProfit >= 0 ? "+" : ""}{Math.round(item.netProfit).toLocaleString()} บ.
                                                     </td>
@@ -787,7 +802,6 @@
 
                     </div>
 
-                    {/* กล่องลงทะเบียนล็อกอินเปิดสิทธิ์ตามสถาปัตยกรรมกลไกดั้งเดิมร้อยเปอร์เซ็นต์ */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
