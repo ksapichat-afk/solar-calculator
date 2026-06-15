@@ -3,358 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V5.9.3</title>
+    <title>TYE Solar ROI Expert Master - V5.9.3 (Refined UI)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
-        .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #ea580c; cursor: pointer; transition: background .15s ease-in-out; }
-        .custom-slider::-webkit-slider-thumb:hover { background: #c2410c; }
+        body { font-family: 'Sarabun', sans-serif; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800">
+<body class="bg-slate-50 text-slate-900">
+    <div id="root"></div>
 
-    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-        
-        <!-- Header ส่วนหัวแบรนด์บริษัท -->
-        <div class="bg-slate-900 text-white p-6 md:p-8 border-b-4 border-orange-500">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
-                        ⭐ TYE SOLAR ROI EXPERT MASTER <span class="text-xs bg-orange-500 text-white px-2 py-0.5 rounded font-bold">V5.9.3</span>
-                    </h1>
-                    <p class="text-xs text-slate-400 mt-1">ระบบวิเคราะห์วิศวกรรมการเงินและการคำนวณโหลดอัจฉริยะ</p>
-                </div>
-                <div class="text-left md:text-right">
-                    <p class="text-sm font-bold text-orange-500">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
-                    <p class="text-[11px] text-slate-400">Technical & Financial Engineering Solutions</p>
-                </div>
-            </div>
-        </div>
+    <script type="text/babel">
+        const { useState, useMemo, useRef, useEffect } = React;
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-            
-            <!-- LEFT PANEL: ส่วนกรอกข้อมูลและสไลเดอร์คำนวณ -->
-            <div class="lg:col-span-7 p-6 md:p-8 space-y-6 bg-slate-50/50">
-                
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-blue-600 rounded-full block"></span> 1. ข้อมูลการใช้ไฟฟ้าเบื้องต้น
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ค่าไฟฟ้าเฉลี่ยต่อเดือน (บาท)</label>
-                            <input type="number" id="inputBill" value="6500" oninput="calculateROI()" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ประเภทมิเตอร์ไฟฟ้า</label>
-                            <select id="meterType" onchange="calculateROI()" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-                                <option value="flat">อัตราปกติ (Flat Rate - ราคาคงที่)</option>
-                                <option value="tou" selected>อัตรา TOU (Time of Use Rate)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVH0o1BUu39kVifgr7pP_vBJ51VPeVaLCAEb84HzduMiLB3D654-orIFFhg4fMHjq57Q/exec"; 
 
-                <hr class="border-slate-100">
-
-                <!-- NEW COMPONENT: Evening Load Calculator (17:00 - 22:00 น.) -->
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-orange-500 rounded-full block"></span> 2. กล่องคำนวณโหลดเครื่องใช้ไฟฟ้าช่วงหัวค่ำ (17:00 - 22:00 น.)
-                    </h2>
-                    <p class="text-[11px] text-slate-400 mb-3 pl-5">*กรอกจำนวนและชั่วโมงการใช้งานจริง เพื่อคำนวณขนาดความจุแบตเตอรี่*</p>
-                    
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm overflow-x-auto">
-                        <table class="w-full text-left text-xs min-w-[500px]">
-                            <thead>
-                                <tr class="text-slate-400 border-b border-slate-100">
-                                    <th class="pb-2 font-semibold">ประเภทเครื่องใช้ไฟฟ้า</th>
-                                    <th class="pb-2 font-semibold text-center w-20">กำลังไฟ (วัตต์)</th>
-                                    <th class="pb-2 font-semibold text-center w-20">จำนวน (เครื่อง)</th>
-                                    <th class="pb-2 font-semibold text-center w-24">เปิดใช้เฉลี่ย (ชม.)</th>
-                                    <th class="pb-2 font-semibold text-right w-24">รวม (Wh)</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50 font-medium text-slate-700" id="applianceBody">
-                                <!-- แอร์เล็ก -->
-                                <tr>
-                                    <td class="py-2.5 flex items-center gap-1.5">❄️ แอร์ 9k-12k BTU</td>
-                                    <td class="py-2.5 text-center"><input type="number" value="900" class="w-14 text-center bg-slate-50 border border-slate-200 rounded p-0.5 font-bold" disabled></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="qty_ac1" value="0" min="0" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="hrs_ac1" value="0" min="0" max="5" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-right font-bold text-slate-500" id="wh_ac1">0 Wh</td>
-                                </tr>
-                                <!-- แอร์ใหญ่ -->
-                                <tr>
-                                    <td class="py-2.5 flex items-center gap-1.5">❄️ แอร์ 18k-24k BTU</td>
-                                    <td class="py-2.5 text-center"><input type="number" value="1800" class="w-14 text-center bg-slate-50 border border-slate-200 rounded p-0.5 font-bold" disabled></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="qty_ac2" value="0" min="0" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="hrs_ac2" value="0" min="0" max="5" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-right font-bold text-slate-500" id="wh_ac2">0 Wh</td>
-                                </tr>
-                                <!-- ตู้เย็น -->
-                                <tr>
-                                    <td class="py-2.5 flex items-center gap-1.5">🧊 ตู้เย็น (Inverter หักเฉลี่ย)</td>
-                                    <td class="py-2.5 text-center"><input type="number" value="200" class="w-14 text-center bg-slate-50 border border-slate-200 rounded p-0.5 font-bold" disabled></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="qty_ref" value="0" min="0" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="hrs_ref" value="0" min="0" max="5" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-right font-bold text-slate-500" id="wh_ref">0 Wh</td>
-                                </tr>
-                                <!-- ปั๊มน้ำ -->
-                                <tr>
-                                    <td class="py-2.5 flex items-center gap-1.5">🚰 ปั๊มน้ำอัตโนมัติ (ช่วงอาบน้ำ)</td>
-                                    <td class="py-2.5 text-center"><input type="number" value="500" class="w-14 text-center bg-slate-50 border border-slate-200 rounded p-0.5 font-bold" disabled></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="qty_pump" value="0" min="0" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="hrs_pump" value="0" min="0" max="5" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-right font-bold text-slate-500" id="wh_pump">0 Wh</td>
-                                </tr>
-                                <!-- ทีวี -->
-                                <tr>
-                                    <td class="py-2.5 flex items-center gap-1.5">📺 ทีวี และเครื่องเสียง</td>
-                                    <td class="py-2.5 text-center"><input type="number" value="150" class="w-14 text-center bg-slate-50 border border-slate-200 rounded p-0.5 font-bold" disabled></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="qty_tv" value="0" min="0" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-center"><input type="number" id="hrs_tv" value="0" min="0" max="5" oninput="updateEveningLoad()" class="w-12 text-center border border-slate-200 rounded p-0.5 font-bold focus:border-orange-500 focus:outline-none"></td>
-                                    <td class="py-2.5 text-right font-bold text-slate-500" id="wh_tv">0 Wh</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <!-- กล่องสรุปผลพลังงานและคำนวณขนาดแบตเตอรี่อัตโนมัติ -->
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-orange-50/50 p-3 rounded-xl">
-                            <div>
-                                <p class="text-xs font-semibold text-slate-600">พลังงานที่หัวค่ำต้องการรวม: <span id="lblTotalWh" class="font-black text-orange-600">0</span> Wh</p>
-                                <p class="text-[10px] text-slate-400 mt-0.5">คำนวณเผื่อความปลอดภัยที่ความลึกการคลายประจุ (DoD 80%)</p>
-                            </div>
-                            <div class="text-left sm:text-right">
-                                <span class="text-xs text-slate-500 block">ขนาดแบตเตอรี่แนะนำขั้นต่ำ</span>
-                                <span id="lblMinBatt" class="text-base font-black text-slate-900">0.00 kWh</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="border-slate-100">
-
-                <!-- พฤติกรรมการกินไฟสไลเดอร์ -->
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-blue-600 rounded-full block"></span> 3. สัดส่วนเวลาการบริโภคพลังงาน (Load Profile)
-                    </h2>
-                    <div class="space-y-4 bg-white p-4 border border-slate-200 rounded-2xl shadow-sm">
-                        <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
-                                <span>☀️ ช่วงกลางวัน (08:00 - 17:00 น.)</span>
-                                <span id="lblDayPercent" class="text-blue-600 font-extrabold text-sm">50%</span>
-                            </div>
-                            <input type="range" id="sliderDay" min="10" max="90" value="50" oninput="adjustSliders('day')" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer custom-slider">
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
-                                <span>🌆 ช่วงหัวค่ำ (17:00 - 22:00 น.)</span>
-                                <span id="lblEveningPercent" class="text-orange-600 font-extrabold text-sm">30%</span>
-                            </div>
-                            <input type="range" id="sliderEvening" min="5" max="80" value="30" oninput="adjustSliders('evening')" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer custom-slider">
-                        </div>
-                        <div class="pt-1 text-[11px] text-slate-400 flex items-center gap-1">
-                            ℹ️ *ระบบล็อกสมดุลช่วงดึกอัตโนมัติที่เหลือ:* <span id="lblNightPercent" class="font-bold text-slate-600">20%</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- RIGHT PANEL: แดชบอร์ดสรุปราคาสุทธิและกราฟ ROI -->
-            <div class="lg:col-span-5 p-6 md:p-8 space-y-6 flex flex-col justify-between">
-                
-                <div class="space-y-4">
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-slate-900 rounded-full block"></span> 4. สรุปการประเมินราคาและระบบที่เลือก
-                    </h2>
-                    
-                    <!-- การ์ดราคาสุทธิรวม -->
-                    <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-md border-b-4 border-orange-500 relative overflow-hidden">
-                        <div class="absolute right-2 -bottom-2 text-slate-800 font-black text-7xl select-none opacity-20">⭐</div>
-                        <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Net Investment</p>
-                        <p class="text-2xl md:text-3xl font-black text-orange-400 mt-1" id="lblTotalPrice">330,000 บาท</p>
-                        <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-                            <span>ระบบหลักที่เลือก: <strong id="lblSysSetup" class="text-white">Hybrid 10kW 1P</strong></span>
-                            <span>คืนทุน: <strong id="lblPayback" class="text-orange-400 font-bold">5.3 ปี</strong></span>
-                        </div>
-                    </div>
-
-                    <!-- แจกแจงบิลไอเทมสไตล์ใบเสร็จ Slate 50 สะอาดตา -->
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-2.5 font-medium">
-                        <div class="flex justify-between text-slate-600">
-                            <span>1. ราคาฐานระบบ Solar + Inverter:</span>
-                            <span id="lblBasePrice" class="font-bold text-slate-800">270,000 บาท</span>
-                        </div>
-                        <div class="flex justify-between text-slate-600">
-                            <span>2. แอดออนแบตเตอรี่เสริมเพื่อช่วยซับไฟหัวค่ำ:</span>
-                            <span id="lblBattPrice" class="font-bold text-orange-600">+60,000 บาท</span>
-                        </div>
-                        <div class="border-t border-dashed border-slate-200 pt-2.5 flex justify-between text-slate-900 font-bold">
-                            <span>ประมาณการผลประหยัดเฉลี่ย:</span>
-                            <span class="text-blue-700 font-extrabold" id="lblMonthlySaving">5,166 บาท/เดือน</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- แสดงผลกราฟ ROI เชิงวิศวกรรมภายในเล่มหลัก -->
-                <div class="bg-white border border-slate-100 p-3 rounded-2xl shadow-sm h-52 mt-4">
-                    <canvas id="mainRoiChart"></canvas>
-                </div>
-
-                <!-- ส่วนท้ายปุ่มแอคชันลิงก์รายงานเอกสารกู้เงิน -->
-                <div class="pt-4 border-t border-slate-100">
-                    <div class="bg-blue-50/50 border border-blue-100 p-3 rounded-xl text-[11px] text-slate-500 mb-3 leading-relaxed">
-                        💡 **คำแนะนำสำหรับเซลล์:** ข้อมูลโหลดหัวค่ำและขนาดแบตเตอรี่ในหน้านี้ จะถูกส่งผ่านตัวแปรไปยังหน้าเล่มเอกสารทางการสีน้ำเงินเนวี่โดยอัตโนมัติเมื่อกดเปิดพิมพ์
-                    </div>
-                    <button onclick="openLoanReport()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all tracking-wider shadow-sm flex items-center justify-center gap-2">
-                        📄 เปิดพิมพ์เล่มรายงานขอกู้ธนาคารฉบับทางการ (Official Loan Report)
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- 🧠 LOGIC ENGINE: ตรรกะและระบบประมวลผลคำนวณเรียลไทม์หลังบ้าน -->
-    <script>
-        let myChart = null;
-
-        // ฟังก์ชันปรับสมดุลสไลเดอร์เปอร์เซ็นต์โหลด
-        function adjustSliders(changed) {
-            let day = parseInt(document.getElementById('sliderDay').value);
-            let evening = parseInt(document.getElementById('sliderEvening').value);
-            
-            if (changed === 'day') {
-                if (day + evening > 95) evening = 95 - day;
-            } else {
-                if (day + evening > 95) day = 95 - evening;
-            }
-            
-            let night = 100 - day - evening;
-            
-            document.getElementById('sliderDay').value = day;
-            document.getElementById('sliderEvening').value = evening;
-            
-            document.getElementById('lblDayPercent').innerText = day + "%";
-            document.getElementById('lblEveningPercent').innerText = evening + "%";
-            document.getElementById('lblNightPercent').innerText = night + "%";
-            
-            calculateROI();
-        }
-
-        // ฟังก์ชันคำนวณกำลังไฟวัตต์รวมของโหลดเครื่องใช้ไฟฟ้าหัวค่ำ
-        function updateEveningLoad() {
-            // ดึงค่าจำนวนและชม.
-            const ac1_wh = 900 * Math.max(0, document.getElementById('qty_ac1').value) * Math.max(0, document.getElementById('hrs_ac1').value);
-            const ac2_wh = 1800 * Math.max(0, document.getElementById('qty_ac2').value) * Math.max(0, document.getElementById('hrs_ac2').value);
-            const ref_wh = 200 * Math.max(0, document.getElementById('qty_ref').value) * Math.max(0, document.getElementById('hrs_ref').value);
-            const pump_wh = 500 * Math.max(0, document.getElementById('qty_pump').value) * Math.max(0, document.getElementById('hrs_pump').value);
-            const tv_wh = 150 * Math.max(0, document.getElementById('qty_tv').value) * Math.max(0, document.getElementById('hrs_tv').value);
-
-            // แสดงผลรายตัวแบบเรียลไทม์
-            document.getElementById('wh_ac1').innerText = ac1_wh.toLocaleString() + " Wh";
-            document.getElementById('wh_ac2').innerText = ac2_wh.toLocaleString() + " Wh";
-            document.getElementById('wh_ref').innerText = ref_wh.toLocaleString() + " Wh";
-            document.getElementById('wh_pump').innerText = pump_wh.toLocaleString() + " Wh";
-            document.getElementById('wh_tv').innerText = tv_wh.toLocaleString() + " Wh";
-
-            const totalWh = ac1_wh + ac2_wh + ref_wh + pump_wh + tv_wh;
-            document.getElementById('lblTotalWh').innerText = totalWh.toLocaleString();
-
-            // คำนวณหาขนาดแบตเตอรี่ขั้นต่ำด้วยสูตรวิศวกรรม (DoD 80%): Wh / (1000 * 0.8)
-            const minBattSize = totalWh / (1000 * 0.8);
-            document.getElementById('lblMinBatt').innerText = minBattSize.toFixed(2) + " kWh";
-
-            calculateROI();
-        }
-
-        // แกนหลักในการประมวลผลกระแสเงินสดและจัดแมตช์ราคาแพ็กเกจ
-        function calculateROI() {
-            const bill = parseFloat(document.getElementById('inputBill').value) || 0;
-            const totalWh = parseInt(document.getElementById('lblTotalWh').innerText.replace(/,/g, '')) || 0;
-            const minBattSize = totalWh / (1000 * 0.8);
-
-            // 1. ตรรกะจัดขนาดระบบอัตโนมัติอ้างอิงจากบิลค่าไฟขั้นต้น
-            let basePrice = 270000;
-            let sysSetupText = "Hybrid 10kW 1P";
-            if (bill < 4000) { basePrice = 150000; sysSetupText = "Hybrid 5kW 1P"; }
-            else if (bill > 12000) { basePrice = 450000; sysSetupText = "Hybrid 15kW 3P"; }
-
-            // 2. ตรรกะจับคู่แอดออนราคาแบตเตอรี่แบบ Auto-Match อ้างอิงตามค่าที่คำนวณได้จริงจากเครื่องใช้ไฟฟ้า
-            let battPrice = 0;
-            let finalBattPack = "No Battery";
-            
-            if (minBattSize > 0 && minBattSize <= 6) { battPrice = 35000; finalBattPack = "LFP 5.12 kWh"; }
-            else if (minBattSize > 6 && minBattSize <= 12) { battPrice = 60000; finalBattPack = "LFP 10.00 kWh"; }
-            else if (minBattSize > 12) { battPrice = 110000; finalBattPack = "LFP 16.00 kWh"; }
-
-            const totalPrice = basePrice + battPrice;
-            
-            // 3. ประมาณการคำนวณผลประหยัดรายเดือนสอดคล้องตาม Load Profile
-            const dayPercent = parseInt(document.getElementById('sliderDay').value);
-            const effFactor = (dayPercent / 50) * 0.8; 
-            const monthlySaving = Math.min(bill * 0.85, bill * effFactor + (battPrice > 0 ? bill * 0.12 : 0));
-            const paybackYears = monthlySaving > 0 ? (totalPrice / (monthlySaving * 12)) : 0;
-
-            // อัปเดตข้อมูลขึ้นสู่หน้าจอการ์ดสรุปฝั่งขวา
-            document.getElementById('lblBasePrice').innerText = basePrice.toLocaleString() + " บาท";
-            document.getElementById('lblBattPrice').innerText = battPrice > 0 ? "+" + battPrice.toLocaleString() + " บาท" : "0 บาท";
-            document.getElementById('lblTotalPrice').innerText = totalPrice.toLocaleString() + " บาท";
-            document.getElementById('lblSysSetup').innerText = sysSetupText + " (" + finalBattPack + ")";
-            document.getElementById('lblMonthlySaving').innerText = Math.round(monthlySaving).toLocaleString() + " บาท/เดือน";
-            document.getElementById('lblPayback').innerText = paybackYears > 0 ? paybackYears.toFixed(1) + " ปี" : "0 ปี";
-
-            // 4. สั่ง Render อัปเดตกราฟแท่งกระแสเงินสดสะสม 25 ปี
-            renderChart(totalPrice, monthlySaving);
-        }
-
-        function renderChart(capital, saving) {
-            const ctx = document.getElementById('mainRoiChart').getContext('2d');
-            const years = Array.from({length: 15}, (_, i) => i + 1);
-            let accum = 0;
-            const dataSavings = years.map(y => {
-                accum += (saving * 12) * Math.pow(0.995, y - 1);
-                return Math.round(accum);
-            });
-            const dataCapital = Array(15).fill(capital);
-
-            if (myChart) myChart.destroy();
-
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: years.map(y => "ปีที่ " + y),
-                    datasets: [
-                        { label: 'ผลประหยัดสะสม', data: dataSavings, backgroundColor: '#3b82f6', order: 2 },
-                        { label: 'เงินลงทุนรวม', data: dataCapital, borderColor: '#ea580c', borderWidth: 2, type: 'line', fill: false, pointRadius: 1, order: 1 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { ticks: { callback: (v) => v.toLocaleString(), font: { family: 'Sarabun', size: 9 } } },
-                        x: { ticks: { font: { family: 'Sarabun', size: 9 } } }
-                    }
-                }
-            });
-        }
-
-        // ฟังก์ชันยิงข้ามข้อมูลไปเปิดเล่มเอกสารกู้เงินยื่นแบงก์ฉบับทางการ
-        function openLoanReport() {
-            alert("ระบบจำลองการส่งออกข้อมูลไปยังเล่มรายงานสินเชื่อ เรียบร้อยแล้ว! (ข้อมูลชื่อบริษัทสะกดถูกต้องและขนาดแบตเตอรี่ที่จับคู่จากโหลดเครื่องใช้ไฟฟ้าจะไปปรากฏในเล่มพิมพ์ 3 หน้าทันที)");
-        }
-
-        // สั่งให้ระบบรันคำนวณทันทีเมื่อเปิดหน้ากระดาษเว็บครั้งแรก
-        window.onload = function() {
-            updateEveningLoad();
-        };
-    </script>
-</body>
-</html>
+        // 1. ฐานข้อมูลแพ็กเกจราคาฐานระบบโซล่าเซลล์ (อัปเดตราคาโปรโมชั่นล่าสุดตามไฟล์ฝ่ายขาย)
+        const SOLAR_PACKAGES = {
+            ongrid: {
+                "1": [
+                    { name: "On-Grid Solis 3kW 1P", maxSize: 3.5, kwpSize: 3.3, price: 89000, panels: 6, area: 18 },
+                    { name: "On-Grid Solis 5kW 1P", maxSize: 5.5, kwpSize: 5.5, price: 135000, panels: 10, area: 30 },
+                    { name: "On-Grid Solis 10kW 1P", maxSize: 100.0, kwpSize: 9.9, price: 215000, panels: 18, area: 54 }
+                ],
+                "3": [
+                    { name: "On-Grid Solis 5kW 3P", maxSize: 5.5, kwpSize: 3.3, price: 149000, panels: 6, area: 18 },
+                    { name: "On-Grid Solis 10kW 3P", maxSize: 10.5, kwpSize: 9.9, price: 239000, panels: 18, area: 54 },
+                    { name: "On-Grid Solis 20kW 3P", maxSize: 25.0, kwpSize: 15.4, price: 409000, panels: 28, area: 84 },
+                    { name: "On-Grid Solis 30kW 3P", maxSize: 100.0, kwpSize: 23.1, price: 549000, panels: 42, area: 126 }
+                ]
+            },
+            hybrid: {
+                "1": [
+                    { name: "Hybrid Deye 5kW 1P", maxSize: 5.2, kwpSize: 5.5, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Deye 6kW 1P", maxSize: 6.2, kwpSize: 5.5, price: 159000, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 6kW 1P", maxSize: 7.0, kwpSize: 5.5, price: 165122, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 8kW 1P", maxSize: 8.5, kwpSize: 7.15, price: 216226, panels: 13, area: 39 },
+                    { name: "Hybrid Deye 10kW 1P", maxSize: 10.2, kwpSize: 9.9, price: 259000, panels: 18, area: 54 },
+                    { name: "Hybrid Solis 10kW 1P", maxSize: 12.0, kwpSize: 9.9, price: 269897, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 15kW 1P", maxSize: 15.5, kwpSize: 11.0, price: 349000, panels: 20, area: 60 },
+                    { name: "Hybrid Solis 16kW 1P", maxSize: 100.0, kwpSize: 12.1, price: 350917, panels: 22, area: 66 }
+                ],
+                "3": [
+                    { name: "Hybrid Deye 5kW 3P", maxSize: 5.5, kwpSize: 5.5, price: 189000, panels: 10, area: 30 },
+                    { name: "Hybrid Solis 10kW 3P", maxSize: 10.2, kwpSize: 8.8, price: 254104, panels: 16, area: 48 },
+                    { name: "Hybrid Deye 10kW 3P", maxSize: 11.5, kwpSize: 9.9, price: 289000, panels: 18, area: 54 },
+                    { name: "Hybrid Deye 12kW 3P", maxSize: 13.5, kwpSize: 12.1, price: 299000, panels: 22, area: 66 },
+                    { name: "Hybrid Deye 15kW 3P", maxSize: 16.0, kwpSize: 11.0, price: 319000, panels: 20, area: 60 },
+                    { name: "Hybrid Solis 20kW 3P", maxSize: 22.0, kwpSize: 15.4, price: 406129, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 20kW 3P", maxSize: 26.0, kwpSize: 15.4, price: 449000, panels: 28, area: 84 },
+                    { name: "Hybrid Deye 30kW 3P", maxSize: 45.0, kwpSize: 13.2, price: 649000, panels: 24, area: 72 },
+                    { name: "Hybrid Solis 50kW 3P", maxSize: 1
