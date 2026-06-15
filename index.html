@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.3.0</title>
+    <title>TYE Solar ROI Expert Master - V6.4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -19,7 +19,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* 🖨️ สถาปัตยกรรมควบคุมเล่มรายงาน ซ่อนตัวบนหน้าจอ แต่กางมิติจริงขนาด 210mm รอสั่งพิมพ์ออก A4 */
+        /* ระบบซ่อนเล่มรายงานพิมพ์จริงไว้หลังฉาก และจะกางมิติจริงขนาด 210mm รอสั่งพิมพ์ออก A4 */
         @media screen {
             .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
             .screen-layout { display: block; }
@@ -28,7 +28,7 @@
             .no-print { display: none !important; }
             .screen-layout { display: none !important; }
             .print-layout { position: static; display: block; width: 100% !important; max-width: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
-            .a4-sheet { width: 100% !important; min-height: 100% !important; padding: 15mm !important; margin: 0 !important; box-shadow: none !important; page-break-after: always; break-after: page; }
+            .a4-sheet { width: 100% !important; min-height: 100% !important; padding: 12mm !important; margin: 0 !important; box-shadow: none !important; page-break-after: always; break-after: page; background: #ffffff !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
@@ -187,7 +187,6 @@
                 return eveningTotalWh / (1000 * 0.8);
             }, [eveningTotalWh]);
 
-            // ล็อกตัวแปรป้องกันดัชนีหลุดขอบเขตอาร์เรย์แบตเตอรี่แบบ Real-time ป้องกันบราวเซอร์แครชจอขาว
             const brandGroup = useMemo(() => BATTERY_OPTIONS[batteryBrand] || [], [batteryBrand]);
             const safeBatteryIndex = useMemo(() => {
                 return batteryIndex >= brandGroup.length ? 0 : batteryIndex;
@@ -293,11 +292,6 @@
                 });
             }, [estSaving, estInvestment]);
 
-            const condensedCashFlow = useMemo(() => {
-                return cashFlowData.filter(item => item.year <= 10 || item.year === 15 || item.year === 20 || item.year === 25);
-            }, [cashFlowData]);
-
-            // ดึงค่าข้อความล่วงหน้าเพื่อความปลอดภัย ปลอดสัญลักษณ์คำถามจุดใน JSX 
             const packageNameStr = matchedPackage ? matchedPackage.name : "-";
             const packagePriceStr = matchedPackage ? Number(matchedPackage.price).toLocaleString() : "0";
             const packagePanelsStr = matchedPackage ? matchedPackage.panels : "0";
@@ -305,9 +299,8 @@
             const paybackPeriodStr = (estInvestment / (estSaving * 12 || 1)).toFixed(1);
             const netLifetimeProfitStr = Math.round(estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005).toLocaleString();
 
-            // ดักจับวงจรวาดกราฟแท่งทั้ง 2 ชุดอิสระ เพื่อประสิทธิภาพสูงสุด
             useEffect(() => {
-                const buildChart = (canvasRef, chartRefRef) => {
+                const buildChart = (canvasRef, chartRefRef, isPrintSize) => {
                     if (!canvasRef.current) return;
                     const ctx = canvasRef.current.getContext('2d');
                     if (chartRefRef.current) chartRefRef.current.destroy();
@@ -333,45 +326,21 @@
                             maintainAspectRatio: false,
                             plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
                             scales: {
-                                y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
-                                x: { ticks: { font: { family: 'Sarabun', size: 9 } } }
+                                y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
+                                x: { ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 } } }
                             }
                         }
                     });
                 };
 
-                buildChart(canvasRef1, chart1);
-                buildChart(canvasRef2, chart2);
+                buildChart(canvasRef1, chart1, false);
+                buildChart(canvasRef2, chart2, true);
 
                 return () => {
                     if (chart1.current) chart1.current.destroy();
                     if (chart2.current) chart2.current.destroy();
                 };
             }, [estSaving, estInvestment]);
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                try {
-                    await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            name: formData.name,
-                            message: formData.tel,
-                            province: province,
-                            email: `V6.3.0|Type2Print|Type:${systemType}`
-                        }),
-                        mode: 'no-cors' 
-                    });
-                    setIsRegistered(true);
-                    setShowModal(false);
-                } catch (error) {
-                    setIsRegistered(true);
-                    setShowModal(false);
-                } finally { 
-                    setIsLoading(false);
-                }
-            };
 
             const executePrint = () => {
                 window.print();
@@ -380,11 +349,17 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์: โครงสร้างและดีไซน์เดิม V5.9.3 ครบถ้วน 100% เพิ่มเติมเฉพาะกล่องรับชื่อลูกค้า */}
+                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI ดั้งเดิมเวอร์ชัน 5.9.3 เพิ่มปุ่มสั่งพิมพ์มุมขวาบน) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
-                            <h1 className="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
-                            <span className="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V6.3.0</span>
+                            <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
+                                <span>⭐ TYE SOLARMASTER</span>
+                                <span className="text-slate-400 font-normal hidden md:inline">|</span>
+                                <span className="text-xs md:text-sm text-slate-300">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</span>
+                            </h1>
+                            <button type="button" onClick={executePrint} className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-xl text-xs md:text-sm shadow-md active:scale-95 transition-all cursor-pointer">
+                                🖨️ สั่งพิมพ์เล่มรายงาน A4
+                            </button>
                         </header>
 
                         <main className="max-w-4xl mx-auto p-4 md:p-8 w-full text-slate-800">
@@ -394,7 +369,7 @@
                                     <div className="space-y-1">
                                         <label className="font-bold text-slate-700 text-sm ml-1">👤 ชื่อ-นามสกุล ของลูกค้า:</label>
                                         <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-base" placeholder="ระบุชื่อลูกค้าเพื่อออกเอกสารทางการ" />
+                                            className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-base" placeholder="ระบุชื่อลูกค้าเพื่อออกรายงานทางการ" />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="font-bold text-slate-700 text-sm ml-1">📞 เบอร์โทรศัพท์ลูกค้า:</label>
@@ -502,46 +477,42 @@
                                                         </thead>
                                                         <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
                                                             <tr>
-                                                                <td className="py-2">❄️ แอร์ 9k-12k BTU</td>
+                                                                <td className="py-2">❄️ แอร์ 9k-12k BTU (900W)</td>
                                                                 <td className="py-2 text-center text-slate-400">900W</td>
                                                                 <td className="py-2 text-center"><input type="number" value={ac1Qty} onChange={(e) => setAc1Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
                                                                 <td className="py-2 text-center"><input type="number" value={ac1Hrs} onChange={(e) => setAc1Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
-                                                                <td className="py-2 text-right font-bold text-slate-500">{(900 * ac1Qty * ac1Hrs).toLocaleString()} Wh</td>
+                                                                <td className="py-2 text-right text-slate-500">{(900 * ac1Qty * ac1Hrs).toLocaleString()} Wh</td>
                                                             </tr>
                                                             <tr>
-                                                                <td className="py-2">❄️ แอร์ 18k-24k BTU</td>
+                                                                <td className="py-2">❄️ แอร์ 18k-24k BTU (1800W)</td>
                                                                 <td className="py-2 text-center text-slate-400">1800W</td>
                                                                 <td className="py-2 text-center"><input type="number" value={ac2Qty} onChange={(e) => setAc2Qty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
                                                                 <td className="py-2 text-center"><input type="number" value={ac2Hrs} onChange={(e) => setAc2Hrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
-                                                                <td className="py-2 text-right font-bold text-slate-500">{(1800 * ac2Qty * ac2Hrs).toLocaleString()} Wh</td>
+                                                                <td className="py-2 text-right text-slate-500">{(1800 * ac2Qty * ac2Hrs).toLocaleString()} Wh</td>
                                                             </tr>
                                                             <tr>
-                                                                <td className="py-2">🧊 ตู้เย็น (หักเฉลี่ยกำลังไฟ)</td>
+                                                                <td className="py-2">🧊 ตู้เย็นประจำบ้านอาคาร (200W)</td>
                                                                 <td className="py-2 text-center text-slate-400">200W</td>
                                                                 <td className="py-2 text-center"><input type="number" value={refQty} onChange={(e) => setRefQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
                                                                 <td className="py-2 text-center"><input type="number" value={refHrs} onChange={(e) => setRefHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
-                                                                <td className="py-2 text-right font-bold text-slate-500">{(200 * refQty * refHrs).toLocaleString()} Wh</td>
+                                                                <td className="py-2 text-right text-slate-500">{(200 * refQty * refHrs).toLocaleString()} Wh</td>
                                                             </tr>
                                                             <tr>
-                                                                <td className="py-2">🚰 ปั๊มน้ำอัตโนมัติ (ช่วงอาบน้ำ)</td>
+                                                                <td className="py-2">🚰 ปั๊มน้ำอัตโนมัติอาคาร (500W)</td>
                                                                 <td className="py-2 text-center text-slate-400">500W</td>
                                                                 <td className="py-2 text-center"><input type="number" value={pumpQty} onChange={(e) => setPumpQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
                                                                 <td className="py-2 text-center"><input type="number" value={pumpHrs} onChange={(e) => setPumpHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
-                                                                <td className="py-2 text-right font-bold text-slate-500">{(500 * pumpQty * pumpHrs).toLocaleString()} Wh</td>
+                                                                <td className="py-2 text-right text-slate-500">{(500 * pumpQty * pumpHrs).toLocaleString()} Wh</td>
                                                             </tr>
                                                             <tr>
-                                                                <td className="py-2">📺 ทีวี และเครื่องเสียง</td>
+                                                                <td className="py-2">📺 ทีวี และเครื่องเสียง (150W)</td>
                                                                 <td className="py-2 text-center text-slate-400">150W</td>
                                                                 <td className="py-2 text-center"><input type="number" value={tvQty} onChange={(e) => setTvQty(Math.max(0, parseInt(e.target.value) || 0))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
                                                                 <td className="py-2 text-center"><input type="number" value={tvHrs} onChange={(e) => setTvHrs(Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))} className="w-12 text-center border border-slate-200 rounded p-0.5 font-bold" /></td>
-                                                                <td className="py-2 text-right font-bold text-slate-500">{(150 * tvQty * tvHrs).toLocaleString()} Wh</td>
+                                                                <td className="py-2 text-right text-slate-500">{(150 * tvQty * tvHrs).toLocaleString()} Wh</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                </div>
-                                                <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl gap-1">
-                                                    <span className="text-slate-600 font-semibold">พลังงานรวมช่วงหัวค่ำ: <strong className="text-orange-600">{eveningTotalWh.toLocaleString()} Wh</strong></span>
-                                                    <span className="text-slate-800 font-bold">ขนาดแบตเตอรี่แนะนำขั้นต่ำ (DoD 80%): <strong className="text-blue-700">{minBatterySize.toFixed(2)} kWh</strong></span>
                                                 </div>
                                             </div>
 
@@ -584,7 +555,7 @@
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
-                                                <span>💰 เงินลงทุนสุทธิรวมทั้งโครงการ (รวม VAT):</span>
+                                                <span className="text-slate-700 text-sm">💰 เงินลงทุนรวมสุทธิ (รวม VAT):</span>
                                                 <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
                                             </div>
                                         </div>
@@ -657,30 +628,23 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                                    <button type="button" onClick={executePrint}
-                                        className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl hover:shadow-blue-200 active:scale-[0.98] transition-all text-base cursor-pointer tracking-wider">
-                                        🖨️ สั่งพิมพ์ใบเสนอราคาข้อเสนอโครงการ (เซฟเป็นกระดาษ A4 PDF จำนวน 2 หน้าจบ)
-                                    </button>
-                                </div>
                             </section>
                         </main>
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนหน้าที่ 2 (แผงเล่มรายงานพิมพ์): ซ่อนตายตัวบนเว็บจอคอมพิวเตอร์ แต่สว่างวาบคมกริบเป็น A4 2 หน้าจบเมื่อกดพิมพ์
+                        📄 🏢 ส่วนรายงานสำหรับพิมพ์ (Print Layout): ซ่อนบนหน้าจอเว็บ แต่ทำงานอัตโนมัติ 2 หน้ากระดาษเมื่อกดพิมพ์
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 เอกสารแผ่นที่ 1 : หัวจดหมายบริษัท + ข้อมูลลูกค้า + กำลังผลิตแนะนำ + ราคาแพ็คเกจแนะนำ */}
+                        {/* 📄 รายงานแผ่นที่ 1 : หัวบริษัท + ข้อมูลลูกค้า + กำลังผลิต + ราคาแพ็คเกจ + ย้ายกราฟมาแผ่นนี้ */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                <div className="border-b-4 border-slate-900 pb-4 mb-6">
+                                <div className="border-b-4 border-slate-900 pb-4 mb-5">
                                     <div className="flex justify-between items-end">
                                         <div>
                                             <h2 className="text-base font-black text-slate-900 tracking-tight">เล่มรายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
-                                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-xs font-black text-blue-900">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
@@ -689,7 +653,7 @@
                                     </div>
                                 </div>
 
-                                <div className="mb-6">
+                                <div className="mb-5">
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">1. รายละเอียดข้อมูลลูกค้าคู่สัญญาและพารามิเตอร์ฐาน (Customer Profile)</h3>
                                     <div className="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-4 gap-y-2 text-xs font-bold text-slate-700">
                                         <div>ชื่อ-นามสกุล ของลูกค้า: <span className="text-slate-950 font-black">{formData.name || '-'}</span></div>
@@ -701,9 +665,9 @@
                                     </div>
                                 </div>
 
-                                <div className="mb-6">
+                                <div className="mb-5">
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">2. ขนาดกำลังการผลิตติดตั้งระบบแนะนำเชิงวิศวกรรม (Recommended Capacity)</h3>
-                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
+                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex justify-between items-center">
                                         <div>
                                             <p className="text-xs text-blue-950 font-bold">ขนาดติดตั้งแผงโซล่าเซลล์รวมที่คุ้มค่าทางเศรษฐศาสตร์สูงสุด</p>
                                             <p className="text-[9px] text-slate-400 font-medium mt-0.5">*คำนวณประมวลผลสอดคล้องตรงตามสถิติความเข้มแสงอาทิตย์จริงในเขตจังหวัด {province}</p>
@@ -715,9 +679,9 @@
                                     </div>
                                 </div>
 
-                                <div className="mb-6">
+                                <div className="mb-5">
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">3. ชุดรายละเอียดแพ็กเกจราคาและงบเงินลงทุนรวม (Investment Packages)</h3>
-                                    <div className="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-3 bg-white">
+                                    <div className="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-2 bg-white">
                                         <div className="flex justify-between items-center text-slate-800">
                                             <span>1. {packageNameStr} (ราคาฐานระบบแผงหลัก + อินเวอร์เตอร์เกรดระดับโลก):</span>
                                             <span className="font-black text-slate-950">{packagePriceStr} บ.</span>
@@ -726,63 +690,66 @@
                                             * โครงสร้างอุปกรณ์: แผงพลังงานพรีเมียม JA Solar (Tier-1) จำนวน {packagePanelsStr} แผง | ใช้พื้นที่ติดตั้งหลังคาประมาณ {packageAreaStr} ตารางเมตร
                                         </div>
                                         {systemType === "hybrid" && (
-                                            <div className="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-2 font-bold">
+                                            <div className="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-1.5 font-bold">
                                                 <span>2. แบตเตอรี่แอดออนเสริมความปลอดภัยสำหรับอินเวอร์เตอร์ Hybrid [{selectedBatteryCapStr}]:</span>
                                                 <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บ.</span>
                                             </div>
                                         )}
-                                        <div className="border-t border-dashed border-slate-300 pt-3 flex justify-between items-baseline text-slate-900 font-black">
-                                            <span className="text-xs">💰 มูลค่ารวมเงินลงทุนรวมสุทธิทั้งโครงการ (รวมภาษีมูลค่าเพิ่ม):</span>
-                                            <span className="text-emerald-600 text-xl tracking-tight">{Number(estInvestment).toLocaleString()} บาท</span>
+                                        <div className="border-t border-dashed border-slate-300 pt-2.5 flex justify-between items-baseline text-slate-900 font-black">
+                                            <span className="text-xs">💰 มูลค่ารวมเงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT เรียบร้อย):</span>
+                                            <span className="text-emerald-600 text-lg tracking-tight">{Number(estInvestment).toLocaleString()} บาท</span>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* ⭐ ย้ายแผงภูมิแท่ง Financial Chart ขึ้นมาวาดผลประโยชน์ไว้ในกระดาษแผ่นแรกตามคำสั่งซื้อ */}
+                                <div className="bg-white border border-slate-200 p-2 rounded-xl">
+                                    <p className="text-[10px] font-black text-slate-700 text-center mb-1">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <div className="h-44 w-full relative">
+                                        <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div className="text-[9px] text-slate-400 font-medium text-center border-t border-slate-100 pt-2">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</div>
                         </div>
 
-                        {/* 📄 เอกสารแผ่นที่ 2 : กราฟแท่ง + สรุปผลตอบแทน + ตารางจุดคุ้มทุนแบบย่อเรียงปี + รายชื่อผู้ประสานงาน */}
+                        {/* 📄 รายงานแผ่นที่ 2 : ย้ายสรุปผลตอบแทน + เปลี่ยนตารางกระแสเงินสดให้กางเต็ม 1-25 ปี + รายชื่อทีมวิศวกร */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
-                                <div className="border-b border-slate-200 pb-1 mb-4">
-                                    <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 แบบจำลองงบกระแสเงินสดสะสมและระยะเวลาคืนทุน (Financial return Simulation)</p>
+                                <div className="border-b border-slate-200 pb-1 mb-3">
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจกแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
 
-                                <div className="mb-4 bg-white border border-slate-200 p-2 rounded-xl">
-                                    <div className="h-52 w-full relative">
-                                        <canvas ref={canvasRef2}></canvas>
+                                <div className="grid grid-cols-2 gap-4 mb-3">
+                                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนโดยประมาณ (Payback Period)</p>
+                                        <p className="text-orange-600 text-base font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนรายปี (Payback Period)</p>
-                                        <p className="text-orange-600 text-xl font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
-                                    </div>
-                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
                                         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
-                                        <p className="text-emerald-700 text-xl font-black">{netLifetimeProfitStr} บ.</p>
+                                        <p className="text-emerald-700 text-base font-black">{netLifetimeProfitStr} บ.</p>
                                     </div>
                                 </div>
 
-                                <div className="mb-4">
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5 border-l-4 border-slate-800 pl-2">4. ตารางพยากรณ์แจกแจงกระแสเงินสดสะสมแบบสรุปย่อ (Condensed Cash Flow Table)</h3>
-                                    <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden font-medium">
-                                        <thead className="bg-slate-900 text-white font-bold text-[9px] uppercase">
+                                <div className="mb-3">
+                                    {/* ⭐ ปรับฟอร์แมตตารางหน้าสองให้แจกแจงข้อมูลเต็มสตรีมครบถ้วนทุกปีตั้งแต่ปีที่ 1 ถึง 25 ไม่มีละแถว */}
+                                    <table className="w-full text-left text-[10px] border border-slate-200 rounded-xl overflow-hidden font-medium">
+                                        <thead className="bg-slate-900 text-white font-bold text-[8px] uppercase">
                                             <tr>
-                                                <th className="px-3 py-1.5">คาดการณ์สิ้นปี</th>
-                                                <th className="px-3 py-1.5">ผลประโยชน์ประหยัดต่อปี</th>
-                                                <th className="px-3 py-1.5">ยอดเงินประหยัดสะสม</th>
-                                                <th className="px-3 py-1.5">กำไรสุทธิสะสมหลังหักทุน</th>
+                                                <th className="px-3 py-1">สิ้นปีที่</th>
+                                                <th className="px-3 py-1">ประมาณการประหยัดต่อปี</th>
+                                                <th className="px-3 py-1">ยอดประโยชน์สะสม</th>
+                                                <th className="px-3 py-1">กำไรสุทธิหลังหักเงินทุนโครงการ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200 bg-white">
-                                            {condensedCashFlow.map((item) => (
-                                                <tr key={item.year} className={item.netProfit >= 0 ? "bg-emerald-50/20" : ""}>
-                                                    <td className="px-3 py-1 font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
-                                                    <td className="px-3 py-1 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
-                                                    <td className="px-3 py-1 text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
-                                                    <td className={`px-3 py-1 font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
+                                            {cashFlowData.map((item) => (
+                                                <tr key={item.year} className={item.netProfit >= 0 ? "bg-emerald-50/15" : ""}>
+                                                    <td className="px-3 py-0.5 font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
+                                                    <td className="px-3 py-0.5 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
+                                                    <td className="px-3 py-0.5 text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
+                                                    {/* ⭐ รีไวส์แก้นามสกุลหน่วยเงินให้เป็นภาษาไทยคำว่า "บ." ตรงกันสม่ำเสมอตามสั่งครบ 100% */}
+                                                    <td className={`px-3 py-0.5 font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
                                                         {item.netProfit >= 0 ? "+" : ""}{Math.round(item.netProfit).toLocaleString()} บ.
                                                     </td>
                                                 </tr>
@@ -795,24 +762,24 @@
                             <div className="border-t-2 border-slate-900 pt-3 font-sans text-[10px]">
                                 <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
                                 <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold">
-                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
                                         <p className="font-black text-slate-800">ฝ่ายขายและการตลาด</p>
                                         <p className="font-medium text-slate-500 mt-0.5">คุณมยุรา (จอย)</p>
                                         <p className="text-blue-900 font-extrabold">โทร: 062-289-2261</p>
                                     </div>
-                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
                                         <p className="font-black text-slate-800">ฝ่ายบริการลูกค้า</p>
                                         <p className="font-medium text-slate-500 mt-0.5">คุณศุภลักษณ์ (อัฐ)</p>
                                         <p className="text-blue-900 font-extrabold">โทร: 092-492-7722</p>
                                     </div>
-                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
                                         <p className="font-black text-slate-800">ฝ่ายเทคนิคและวิศวกรรม</p>
                                         <p className="font-medium text-slate-500 mt-0.5">คุณโมสต์</p>
                                         <p className="text-blue-900 font-extrabold">โทร: 099-563-6837</p>
                                     </div>
                                 </div>
                                 <div className="flex justify-between items-center mt-3 text-[8px] text-slate-400 border-t border-slate-100 pt-1.5 font-normal">
-                                    <span>* แผนภาพจัดทำจำลองบนสถิติฐานเศรษฐศาสตร์วิศวกรรมของ TYE Solar ในปี 2026</span>
+                                    <span>* แผนภาพจัดทำอ้างอิงอัตราฐานเศรษฐศาสตร์วิศวกรรมของ TYE Solar ในปี 2026</span>
                                     <span>หน้า 2 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</span>
                                 </div>
                             </div>
@@ -820,13 +787,13 @@
 
                     </div>
 
-                    {/* กล่องลงทะเบียนเปิดสิทธิ์ใช้งานระบบแบบแมนนวลดั้งเดิมคงไว้ครบถ้วน */}
+                    {/* กล่องลงทะเบียนล็อกอินเปิดสิทธิ์ตามสถาปัตยกรรมกลไกดั้งเดิมร้อยเปอร์เซ็นต์ */}
                     {showModal && !isRegistered && (
                         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
                                 <h3 className="text-2xl font-black mb-2 text-slate-800 italic">⭐ TYE Solar Audit</h3>
                                 <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเข้าใช้งานระบบประมวลผลคำนวณจุดคุ้มทุน</p>
-                                <form onSubmit={handleSubmit} className="space-y-4">
+                                <form onSubmit={(e) => { e.preventDefault(); setIsRegistered(true); setShowModal(false); }} className="space-y-4">
                                     <div className="text-left">
                                         <label className="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-widest">Installation Province</label>
                                         <select value={province} onChange={(e) => setProvince(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
@@ -835,7 +802,7 @@
                                     </div>
                                     <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                                     <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
-                                    <input type="submit" disabled={isLoading} value={isLoading ? "Processing..." : "เปิดระบบคำนวณโปรโมชั่น"} className="w-full text-center block bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg cursor-pointer" />
+                                    <input type="submit" value="เปิดระบบคำนวณโปรโมชั่น" className="w-full text-center block bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg cursor-pointer" />
                                 </form>
                             </div>
                         </div>
