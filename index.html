@@ -323,24 +323,34 @@
                             ]
                         },
                         options: {
-                            responsive: !isPrintSize, 
-                            maintainAspectRatio: false,
-                            layout: {
-                                padding: {
-                                    right: isPrintSize ? 35 : 10,
-                                    left: 10,
-                                    top: 5,
-                                    bottom: 5
-                                }
-                            },
-                            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
-                            scales: {
-                                y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
-                                x: { ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 } } }
-                            }
-                        }
-                    });
-                };
+    responsive: true,
+    maintainAspectRatio: false, // สำคัญมาก: ต้องเป็น false เพื่อให้ยืดตาม div
+    layout: {
+        padding: { top: 20, right: 10, bottom: 5, left: 10 } // เติม padding top เผื่อที่ให้ label ด้านบน
+    },
+    scales: {
+        y: {
+            beginAtZero: true,
+            ticks: { 
+                font: { size: 9 }, 
+                callback: (v) => v.toLocaleString() + ' บ.' 
+            }
+        },
+        x: {
+            // สำคัญ: บังคับให้แสดง ticks เสมอ และปรับให้กระชับ
+            ticks: { 
+                font: { size: 8 }, 
+                autoSkip: false, // ป้องกันกราฟซ่อนจำนวนปี
+                maxRotation: 45, // เอียงตัวเลข 45 องศาเพื่อประหยัดพื้นที่
+                minRotation: 45
+            },
+            grid: { display: false } // ปิดเส้น grid แกน X เพื่อให้ดูสะอาดขึ้น
+        }
+    },
+    plugins: {
+        legend: { display: false } // ปิด legend ถ้าพื้นที่จำกัด เพื่อคืนที่ให้กราฟ
+    }
+}
 
                 buildChart(canvasRef1, chart1, false);
                 buildChart(canvasRef2, chart2, true);
