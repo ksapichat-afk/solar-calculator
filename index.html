@@ -19,12 +19,15 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* 🖨️ มาตรฐานควบคุมหน้ากระดาษเสนอราคาขายสากล บังคับ 2 หน้าจบ */
+        /* 🖨️ สถาปัตยกรรมควบคุมหน้ากระดาษเสนอราคาขายสากล บังคับ 2 หน้าจบ ไร้รอยต่อ */
+        @media screen {
+            .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
+            .screen-layout { display: block; }
+        }
         @media print {
             .no-print { display: none !important; }
-            body { background-color: #ffffff; padding: 0; margin: 0; color: #000000; }
-            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            .animate-fade-in { animation: none !important; transform: none !important; }
+            .screen-layout { display: none !important; }
+            .print-layout { position: static; display: block; width: 100%; max-width: 100%; background: #ffffff; }
             .page-break { page-break-after: always; break-after: page; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -127,8 +130,7 @@
             "อุทัยธานี": 4.18, "อุบลราชธานี": 4.35
         };
 
-        // สถาปัตยกรรมกราฟแท่งเดี่ยวสำหรับการพิมพ์ (ผูกฟอนต์และปรับแต่งแกนให้คลีนตามมาตรฐาน)
-        const SolarChart = ({ id, savingYearly, investment }) => {
+        const SolarChart = ({ savingYearly, investment }) => {
             const canvasRef = useRef(null);
             const chartRef = useRef(null);
 
@@ -348,7 +350,6 @@
                 });
             }, [estSaving, estInvestment]);
 
-            // ⭐ ตรรกะคัดย่อตารางตามคำสั่งซื้อ: ดึงเฉพาะปีที่ 1-10, 15, 20, 25 เพื่อบีบลงหน้า 2 สวยงามกระชับ
             const condensedCashFlow = useMemo(() => {
                 return cashFlowData.filter(item => item.year <= 10 || item.year === 15 || item.year === 20 || item.year === 25);
             }, [cashFlowData]);
@@ -360,8 +361,8 @@
             return (
                 <div class="min-h-screen flex flex-col">
                     
-                    {/* แผงควบคุมหลักบนหน้าจอ (จะโดนซ่อนอัตโนมัติเมื่อสั่งพิมพ์ออกกระดาษ) */}
-                    <div class="flex flex-col flex-grow print:hidden">
+                    {/* 🖥️ แผงควบคุมหลักบนหน้าจอความละเอียดสูง (จะทำงานเฉพาะโหมดแสดงผลเว็บบราวเซอร์ปกติ) */}
+                    <div class="screen-layout flex flex-col flex-grow">
                         <header class="bg-slate-900 p-5 text-white shadow-xl flex justify-between items-center">
                             <h1 class="text-xl font-bold tracking-tighter">⭐ TYE SOLARMASTER</h1>
                             <span class="text-[10px] bg-indigo-600 px-3 py-1 rounded font-black uppercase tracking-widest">Premium V5.9.3</span>
@@ -589,211 +590,3 @@
                                 </div>
 
                                 <div class="pt-8 border-t border-slate-100">
-                                    <h3 class="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">Sub-Dashboard (Screen Simulation)</h3>
-                                    <SolarChart savingYearly={estSaving * 12} investment={estInvestment} />
-                                </div>
-
-                                <div class="mt-8 pt-6 border-t border-slate-100 text-center">
-                                    <button type="button" onClick={executePrint} class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl hover:shadow-blue-200 active:scale-[0.98] transition-all text-base cursor-pointer tracking-wider">
-                                        🖨️ เปิดเล่มพิมพ์รายงานสรุปผลประโยชน์การลงทุน (2 หน้าจบ)
-                                    </button>
-                                </div>
-                            </section>
-                        </main>
-                    </div>
-
-                    {/* ========================================================================
-                        📄 🏢 แผงโครงสร้างเล่มรายงานสั่งพิมพ์ทางราชการ (จะแสดงผลเฉพาะบนไฟล์ PDF เท่านั้น)
-                        ======================================================================== */}
-                    <div class="hidden print:block font-sans text-slate-900 leading-relaxed bg-white p-0">
-                        
-                        {/* 📄 หน้าที่ 1 : หัวจดหมายริษัท + ข้อมูลลูกค้า + กำลังผลิตแนะนำ + ราคาแพ็คเกจแนะนำ */}
-                        <div class="page-break flex flex-col justify-between" style={{ minHeight: '290mm' }}>
-                            <div>
-                                {/* หัวจดหมายสไตล์บริษัทวิศวกรรมสากล */}
-                                <div class="border-b-4 border-slate-900 pb-4 mb-6">
-                                    <div class="flex justify-between items-end">
-                                        <div>
-                                            <h2 class="text-xl font-black text-slate-900 tracking-tight">เล่มรายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
-                                            <p class="text-[10px] text-slate-500 mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL - FOR INTERNAL USE ONLY</p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-xs font-black text-blue-900">บริษัท ธัญญธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</p>
-                                            <p class="text-[9px] text-slate-400">Technical Expert & Asset Optimization Solutions</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* กล่องข้อมูลลูกค้าคู่สัญญา */}
-                                <div class="mb-6">
-                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">1. รายละเอียดผู้รับข้อเสนอและพารามิเตอร์ฐาน (Customer Profile)</h3>
-                                    <div class="grid grid-cols-2 bg-slate-50 border border-slate-200 rounded-xl p-4 gap-y-2 text-xs font-bold text-slate-700">
-                                        <div>ชื่อ-นามสกุล ลูกค้า: <span class="text-slate-950 font-black">{formData.name || '-'}</span></div>
-                                        <div>จังหวัดที่ติดตั้งอาคาร: <span class="text-slate-950 font-black">{province}</span></div>
-                                        <div>เบอร์โทรศัพท์ติดต่อ: <span class="text-slate-950 font-black">{formData.tel || '-'}</span></div>
-                                        <div>ฐานค่าไฟฟ้าเดิม: <span class="text-slate-950 font-black">เดือนละ {Number(bill).toLocaleString()} บาท</span></div>
-                                        <div>ประเภทระบบคำนวณ: <span class="text-slate-950 font-black uppercase">{systemType} System</span></div>
-                                        <div>พฤติกรรมการบริโภคไฟ: <span class="text-slate-950 font-black">กลางวัน {dayUsage}% / ค่ำ {eveningUsage}% / ดึก {nightUsage}%</span></div>
-                                    </div>
-                                </div>
-
-                                {/* กล่องกำลังการผลิตแนะนำเชิงลึก */}
-                                <div class="mb-6">
-                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">2. ขนาดกำลังการผลิตที่แนะนำเชิงวิศวกรรม (Recommended Capacity)</h3>
-                                    <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
-                                        <div>
-                                            <p class="text-[11px] text-blue-950 font-bold">ขนาดติดตั้งระบบที่คุ้มค่าทางเศรษฐศาสตร์มากที่สุด</p>
-                                            <p class="text-[9px] text-slate-400 mt-0.5">*คำนวณสอดคล้องตาม Load Profile และปริมาณความเข้มแสงจริงของจังหวัด {province}</p>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="text-2xl font-black text-slate-900">{solarSize}</span>
-                                            <span class="text-sm font-bold text-slate-500 ml-1">kWp</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* กล่องรายละเอียดแพ็กเกจราคาทางบัญชีฝ่ายขาย */}
-                                <div class="mb-6">
-                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">3. สรุปรายละเอียดชุดแพ็กเกจราคาและการลงทุน (Investment Packages)</h3>
-                                    {matchedPackage ? (
-                                        <div class="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-3 bg-white">
-                                            <div class="flex justify-between items-center text-slate-800">
-                                                <span>1. {matchedPackage.name} (ระบบแผงโซล่าเซลล์หลัก + อินเวอร์เตอร์):</span>
-                                                <span class="font-black text-slate-950 text-sm">{Number(matchedPackage.price).toLocaleString()} ฿</span>
-                                            </div>
-                                            <div class="text-[10px] text-slate-400 pl-3 font-normal leading-relaxed">
-                                                * รายละเอียดอุปกรณ์ภายใน: บรรจุแผง JA Solar (Tier-1) เกรดพรีเมียม จำนวน {matchedPackage.panels} แผง | ใช้พื้นที่ติดตั้งโครงสร้างหลังคาประมาณ {matchedPackage.area} ตารางเมตร
-                                            </div>
-                                            {systemType === "hybrid" && (
-                                                <div class="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-2 font-bold">
-                                                    <span>2. แบตเตอรี่แอนออนเสริมเสถียรภาพระบบ {batteryBrand} [{BATTERY_OPTIONS[batteryBrand]?.[batteryIndex]?.cap || '5.12 kWh'}]:</span>
-                                                    <span class="font-black">+{Number(estBatteryCost).toLocaleString()} ฿</span>
-                                                </div>
-                                            )}
-                                            <div class="border-t border-dashed border-slate-300 pt-3 flex justify-between items-baseline text-slate-900 font-black">
-                                                <span class="text-sm">💰 มูลค่ารวมเงินลงทุนสุทธิทั้งโครงการ (รวมภาษีมูลค่าเพิ่ม):</span>
-                                                <span class="text-emerald-600 text-xl tracking-tight">{Number(estInvestment).toLocaleString()} <span class="text-xs text-slate-500 font-bold">บาท</span></span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <p class="text-xs text-slate-400">ไม่มีข้อมูลแพ็กเกจราคาที่ตรงสเปก</p>
-                                    )}
-                                </div>
-                            </div>
-                            <div class="text-[9px] text-slate-400 text-center border-t border-slate-100 pt-2 mb-2">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</div>
-                        </div>
-
-                        {/* 📄 หน้าที่ 2 : กราฟแท่ง + สรุปผลตอบแทน + ตารางจุดคุ้มทุนแบบย่อเรียงปี + ผู้ประสานงาน */}
-                        <div class="flex flex-col justify-between" style={{ minHeight: '290mm' }}>
-                            <div>
-                                {/* หัวรายงานหน้า 2 */}
-                                <div class="border-b border-slate-200 pb-2 mb-4">
-                                    <p class="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ส่วนแบบจำลองผลตอบแทนและบัญชีกระแสเงินสด (Financial Return Simulation)</p>
-                                </div>
-
-                                {/* กราฟแท่งขนาดใหญ่เต็มตา คลีนร้อยเปอร์เซ็นต์ ไร้บั๊กทับซ้อน */}
-                                <div class="mb-4 bg-white border border-slate-200 p-2 rounded-xl">
-                                    <p class="text-[11px] font-black text-slate-800 mb-1 text-center">แผนภูมิแสดงการสะสมกระแสเงินสดและผลประหยัดรายปี ตลอดอายุการใช้งาน 25 ปี</p>
-                                    <SolarChart id="chartPrint" savingYearly={estSaving * 12} investment={estInvestment} />
-                                </div>
-
-                                {/* การ์ดสรุปผลตอบแทนทางการเงิน (Payback Period) */}
-                                <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">ระยะเวลาคืนทุนโครงการ (Payback Period)</p>
-                                        <p class="text-orange-600 text-2xl font-black">{(estInvestment / (estSaving * 12 || 1)).toFixed(1)} <span class="text-sm font-bold text-slate-500">ปี</span></p>
-                                    </div>
-                                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">ผลประหยัดรวมสะสม 25 ปี (Net Lifetime Savings)</p>
-                                        <p class="text-emerald-700 text-2xl font-black">
-                                            {Number((estSaving * 12 * (1 - Math.pow(0.995, 25)) / 0.005)).toLocaleString(undefined, {maximumFractionDigits: 0})} <span class="text-sm font-bold text-slate-500">฿</span>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* ตารางจุดคุ้มทุนแบบย่อดนตรีตัวเลข ล้างอักษรต่างดาวคุมโทนเงินไทย ฿ */}
-                                <div class="mb-4">
-                                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">4. ตารางแจกแจงกระแสเงินสดสะสมแบบสรุปย่อ (Condensed Cash Flow Report)</h3>
-                                    <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden font-medium">
-                                        <thead class="bg-slate-900 text-white font-bold text-[10px] uppercase">
-                                            <tr>
-                                                <th class="px-4 py-2">ปีที่</th>
-                                                <th class="px-4 py-2">คาดการณ์ผลประหยัดต่อปี</th>
-                                                <th class="px-4 py-2">ผลประหยัดสะสม</th>
-                                                <th class="px-4 py-2">กำไรสุทธิสะสมหลังหักเงินทุน</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-200 bg-white">
-                                            {condensedCashFlow.map((item) => (
-                                                <tr key={item.year} class={item.netProfit >= 0 ? 'bg-emerald-50/30' : ''}>
-                                                    <td class="px-4 py-1.5 font-bold text-slate-900">ปีที่ {item.year}</td>
-                                                    <td class="px-4 py-1.5 text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} ฿</td>
-                                                    <td class="px-4 py-1.5 text-slate-600">{Math.round(item.cumulative).toLocaleString()} ฿</td>
-                                                    <td class={`px-4 py-1.5 font-black ${item.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
-                                                        {item.netProfit >= 0 ? '+' : ''}{Math.round(item.netProfit).toLocaleString()} ฿
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* ส่วนปิดท้าย : บล็อกผู้ประสานงานระดับพรีเมียม */}
-                            <div class="border-t-2 border-slate-900 pt-3 font-sans text-[10px]">
-                                <p class="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
-                                <div class="grid grid-cols-3 gap-3 text-slate-600 font-bold">
-                                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                        <p class="font-black text-slate-800">ฝ่ายขายและการตลาด</p>
-                                        <p class="font-medium text-slate-500 mt-0.5">คุณมยุรา (จอย)</p>
-                                        <p class="text-blue-900">โทร: 062-289-2261</p>
-                                    </div>
-                                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                        <p class="font-black text-slate-800">ฝ่ายบริการลูกค้า</p>
-                                        <p class="font-medium text-slate-500 mt-0.5">คุณศุภลักษณ์ (อัฐ)</p>
-                                        <p class="text-blue-900">โทร: 092-492-7722</p>
-                                    </div>
-                                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                        <p class="font-black text-slate-800">ฝ่ายเทคนิคและวิศวกรรม</p>
-                                        <p class="font-medium text-slate-500 mt-0.5">คุณโมสต์</p>
-                                        <p class="text-blue-900">โทร: 099-563-6837</p>
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center mt-3 text-[8px] text-slate-400 border-t border-slate-100 pt-1.5 font-normal">
-                                    <span>* แผนภาพคำนวณอ้างอิงอัตราค่าไฟปี 2026 บนฐานข้อมูลทางเศรษฐศาสตร์ของ TYE Solar</span>
-                                    <span>หน้า 2 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {/* ป๊อปอัพลงทะเบียนหน้าแรกเปิดระบบคงไว้ตามสัญญากลไกเดิม */}
-                    {showModal && !isRegistered && (
-                        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
-                            <div class="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-md w-full shadow-2xl text-center">
-                                <h3 class="text-2xl font-black mb-2 text-slate-800 italic">⭐ TYE Solar Audit</h3>
-                                <p class="text-slate-500 text-sm mb-8 leading-relaxed font-medium">ระบุข้อมูลของคุณเพื่อเข้าใช้งานระบบประมวลผลคำนวณจุดคุ้มทุน</p>
-                                <form onSubmit={handleSubmit} class="space-y-4">
-                                    <div class="text-left">
-                                        <label class="text-[10px] font-bold text-slate-400 ml-3 mb-1 block uppercase tracking-widest">Installation Province</label>
-                                        <select value={province} onChange={(e) => setProvince(e.target.value)} class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none font-bold text-slate-700 cursor-pointer">
-                                            {Object.keys(PROVINCE_SUN_HOURS).sort().map(p => (<option key={p} value={p}>{p}</option>))}
-                                        </select>
-                                    </div>
-                                    <input required type="text" placeholder="ชื่อ-นามสกุล ของคุณ" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                                    <input required type="tel" placeholder="เบอร์โทรศัพท์ติดต่อ" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 font-medium" value={formData.tel} onChange={(e) => setFormData({...formData, tel: e.target.value})} />
-                                    <input type="submit" disabled={isLoading} value={isLoading ? 'Processing...' : 'เปิดระบบคำนวณโปรโมชั่น'} class={`w-full text-center block ${isLoading ? 'bg-slate-400' : 'bg-blue-700 hover:bg-blue-800'} text-white font-black py-5 rounded-2xl mt-6 shadow-xl active:scale-95 transition-all text-lg cursor-pointer`} />
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
