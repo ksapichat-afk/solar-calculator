@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.7.0</title>
+    <title>TYE Solar ROI Expert Master - V6.7.5 (Official Master Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght=300;400;500;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* ระบบจัดเลย์เอาต์หน้ากระดาษพรีวิวจำลองขนาด A4 บนหน้าจอคอมพิวเตอร์ */
+        /* [FIXED] เปลี่ยนกลไกซ่อนแผ่นพิมพ์บนหน้าจอ เพื่อให้เบราว์เซอร์คำนวณขนาดกราฟได้อย่างแม่นยำ */
         @media screen {
-            .print-layout { position: absolute; left: -9999px; top: -9999px; width: 210mm; }
+            .print-layout { 
+                position: absolute; 
+                top: 100%; 
+                left: 0; 
+                width: 210mm; 
+                opacity: 0; 
+                pointer-events: none; 
+            }
             .screen-layout { display: block; }
         }
-        /* ระบบล็อกกระดาษพิมพ์สากล บังคับสลับหน้าอัตโนมัติเมื่อสั่งพิมพ์เป็น PDF ขนาด A4 */
+        /* ระบบพิมพ์สากลเมื่อสั่งเซฟเป็น PDF ขนาด A4 */
         @media print {
-            @page { size: A4; margin: 0; } /* ล็อกขนาดกระดาษและล้างระยะขอบเพี้ยนของเบราว์เซอร์ */
+            @page { size: A4; margin: 0; }
             .no-print { display: none !important; }
             .screen-layout { display: none !important; }
-            .print-layout { position: static; display: block; width: 100% !important; max-width: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
+            .print-layout { position: static; display: block; width: 100% !important; max-width: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; opacity: 1 !important; }
             .a4-sheet { width: 100% !important; min-height: 100% !important; padding: 12mm !important; margin: 0 !important; box-shadow: none !important; page-break-after: always; break-after: page; background: #ffffff !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -121,7 +126,7 @@
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
             "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
-            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
+            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุlook": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
             "ยโสธร": 4.28, "ยะลา": 3.78, "ร้อยเอ็ด": 4.26, "ระนอง": 3.70, "ระยอง": 4.10,
             "ราชบุรี": 4.15, "ลพบุรี": 4.22, "ลำปาง": 3.88, "ลำพูน": 3.86, "เลย": 4.05,
@@ -323,11 +328,11 @@
                             ]
                         },
                         options: {
-                            responsive: !isPrintSize, 
+                            responsive: true, // [FIXED] ตั้งค่าเป็น true ทั้งสองฝั่งเพื่อให้กราฟยืดตัวตามขนาดกล่องของตัวเองได้อิสระ
                             maintainAspectRatio: false,
                             layout: {
                                 padding: {
-                                    right: isPrintSize ? 35 : 10,
+                                    right: isPrintSize ? 30 : 10,
                                     left: 10,
                                     top: 5,
                                     bottom: 5
@@ -336,7 +341,15 @@
                             plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
                             scales: {
                                 y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
-                                x: { ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 } } }
+                                x: { 
+                                    ticks: { 
+                                        font: { family: 'Sarabun', size: isPrintSize ? 7.5 : 9 },
+                                        autoSkip: false, // [FIXED] บังคับให้แกน X แสดงผลครบปีที่ 1 ถึง 25 ห้ามระบบสุ่มซ่อนตัวหนังสือ
+                                        maxRotation: isPrintSize ? 45 : 0, // [FIXED] ถ้าเป็นเล่มกระดาษพิมพ์ให้เอียง 45 องศาเพื่อไม่ให้ตัวหนังสือเบียดชนกัน
+                                        minRotation: isPrintSize ? 45 : 0
+                                    },
+                                    grid: { display: false }
+                                }
                             }
                         }
                     });
@@ -358,12 +371,11 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100% ติดตั้งรูปโลโก้คู่ขนาน) */}
+                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                {/* โลโก้จริงของบริษัท บนหน้าต่างควบคุมหน้าจอเว็บคอมพิวเตอร์ */}
-                                <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
+                                <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
                                 <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
                                     <span>⭐ TYE SOLARMASTER</span>
                                     <span className="text-slate-400 font-normal hidden md:inline">|</span>
@@ -600,7 +612,7 @@
                                 </div>
 
                                 <div className="pt-8 border-t border-slate-100">
-                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation </h3>
+                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation (หน้าแรกคอมพิวเตอร์)</h3>
                                     <div className="h-64 w-full relative">
                                         <canvas ref={canvasRef1}></canvas>
                                     </div>
@@ -651,21 +663,18 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนเล่มรายงานทางการสำหรับพิมพ์ (Print Layout): ซ่อนบนจอเว็บ แต่เปิดรันอัตโนมัติเมื่อคีย์สั่งปริ้น
+                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout): ล็อกความแม่นยำสูง ยึดเต็มบล็อก 80mm
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : บล็อกหัวบริษัทเพิ่มโลโก้จริงตัวจริงคมกริบ + ข้อมูลสเปกครบวงจร + กราฟพรีเมียมพอดีแผ่น */}
+                        {/* 📄 รายงานแผ่นที่ 1 */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm text-center">
-                                    
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 1 (เด่น ชัดเจน คมกริบระดับโปร) */}
                                     <div className="flex flex-col items-center justify-center mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
+                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
                                         <span className="text-[9px] font-black text-slate-800 tracking-widest uppercase mt-1">TYE SOLARMASTER TECHNICAL FINANCING</span>
                                     </div>
-
                                     <h2 className="text-base font-black text-slate-900 tracking-tight">รายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
                                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
                                 </div>
@@ -721,9 +730,10 @@
                                     </div>
                                 </div>
 
+                                {/* [FIXED] อัปเดต Wrapper ล็อกสัดส่วนมิลลิเมตรสัมพันธ์กับแนวราบ 100% สกัดอาการปีแกน X หายขาด */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
-                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-[75mm] w-[172mm] mx-auto relative">
+                                    <p className="text-[9px] font-black text-slate-700 text-center mb-1">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <div style={{ height: '80mm', width: '100%', position: 'relative' }} className="mx-auto">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
@@ -735,17 +745,14 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวบริษัทติดโลโก้เรียบร้อย + ตาราง Cash Flow 25 ปีขาวสะอาด + รายชื่อวิศวกร 3 ท่าน */}
+                        {/* 📄 รายงานแผ่นที่ 2 */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm text-center">
-                                    
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 2 (กระชับรับสัดส่วนตาราง) */}
                                     <div className="flex items-center justify-center gap-2 mb-1">
-                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
+                                        <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
                                         <span className="text-[10px] font-extrabold text-slate-900 tracking-widest uppercase">TYE SOLAR LIFETIME REPORT</span>
                                     </div>
-
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
 
