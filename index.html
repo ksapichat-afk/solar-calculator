@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.7.7 (Official Stable)</title>
+    <title>TYE Solar ROI Expert Master - V6.7.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
@@ -283,9 +283,10 @@
             }, [matchedPackage, sunHours, dayUsage, eveningUsage, bill, systemType, selectedBatteryCapStr, rates.day, rates.evening, rates.avg]);
 
             const cashFlowData = useMemo(() => {
-                const years = Array.from({length: 25}, (_, i) => i + 1);
+                const years = Array.from({length: 25}, (_, i) => i + i*0); // ปลอดภัย 25 ปีสม่ำเสมอ
                 let cumulative = 0;
-                return years.map(year => {
+                return years.map((_, i) => {
+                    const year = i + 1;
                     const yearlySaving = estSaving * 12 * Math.pow(0.995, year - 1);
                     cumulative += yearlySaving;
                     const netProfit = cumulative - estInvestment;
@@ -323,14 +324,14 @@
                             ]
                         },
                         options: {
-                            responsive: true, // บังคับเป็น true ทั้งหน้าจอคอมและหน้ากระดาษพิมพ์เพื่อให้คุมกล่องได้ขาด
+                            responsive: true,
                             maintainAspectRatio: false,
                             layout: {
                                 padding: {
                                     right: isPrintSize ? 35 : 10,
                                     left: 10,
-                                    top: isPrintSize ? 15 : 5,      // เพิ่มช่องว่างด้านบนหลบขอบขาว
-                                    bottom: isPrintSize ? 15 : 5   // เพิ่มช่องว่างด้านล่างหลบแกนปี
+                                    top: isPrintSize ? 15 : 5,
+                                    bottom: isPrintSize ? 15 : 5
                                 }
                             },
                             plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
@@ -339,8 +340,8 @@
                                 x: { 
                                     ticks: { 
                                         font: { family: 'Sarabun', size: isPrintSize ? 7.5 : 9 },
-                                        autoSkip: false, // บังคับให้แกน X แสดงผลครบปีที่ 1 ถึง 25 เสมอ ห้ามแอบซ่อน
-                                        maxRotation: isPrintSize ? 45 : 0, // เอียงตัวหนังสือ 45 องศาเฉพาะตอนพิมพ์ เพื่อให้ไม่เบียดกรอบ
+                                        autoSkip: false,
+                                        maxRotation: isPrintSize ? 45 : 0,
                                         minRotation: isPrintSize ? 45 : 0
                                     } 
                                 }
@@ -369,6 +370,7 @@
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
+                                {/* โลโก้จริงของบริษัท บนหน้าต่างควบคุมหน้าจอเว็บคอมพิวเตอร์ */}
                                 <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
                                 <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
                                     <span>⭐ TYE SOLARMASTER</span>
@@ -657,16 +659,16 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout): ซ่อนบนจอเว็บ แต่เปิดรันอัตโนมัติเมื่อคีย์สั่งปริ้น
+                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout)
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
-                        {/* 📄 รายงานแผ่นที่ 1 : บล็อกหัวบริษัทเพิ่มโลโก้จริงตัวจริงคมกริบ + ข้อมูลสเปกครบวงจร + กราฟพรีเมียมพอดีแผ่น */}
+                        {/* 📄 รายงานแผ่นที่ 1 */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm text-center">
                                     
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 1 (เด่น ชัดเจน คมกริบระดับโปร) */}
+                                    {/* Бล็อกหัวบริษัทและโลโก้ */}
                                     <div className="flex flex-col items-center justify-center mb-1">
                                         <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
                                         <span className="text-[9px] font-black text-slate-800 tracking-widest uppercase mt-1">TYE SOLARMASTER TECHNICAL FINANCING</span>
@@ -727,9 +729,10 @@
                                     </div>
                                 </div>
 
+                                {/* กล่องแสดงผลกราฟแผ่นพิมพ์ หดลงเหลือ h-[62mm] เพื่อความสมดุลลงตัวกรอบขาว 100% */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div className="h-[60mm] w-[172mm] mx-auto relative">
+                                    <div className="h-[62mm] w-[172mm] mx-auto relative">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
@@ -741,12 +744,11 @@
                             </div>
                         </div>
 
-                        {/* 📄 รายงานแผ่นที่ 2 : บล็อกหัวบริษัทติดโลโก้เรียบร้อย + ตาราง Cash Flow 25 ปีขาวสะอาด + รายชื่อวิศวกร 3 ท่าน */}
+                        {/* 📄 รายงานแผ่นที่ 2 */}
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm text-center">
                                     
-                                    {/* 📦 การจัดวางบล็อกโลโก้บริษัทของแผ่นพิมพ์ที่ 2 (กระชับรับสัดส่วนตาราง) */}
                                     <div className="flex items-center justify-center gap-2 mb-1">
                                         <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
                                         <span className="text-[10px] font-extrabold text-slate-900 tracking-widest uppercase">TYE SOLAR LIFETIME REPORT</span>
