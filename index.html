@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYE Solar ROI Expert Master - V6.7.5 (Official Master Edition)</title>
+    <title>TYE Solar ROI Expert Master - V6.7.6 (Production Ready)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght=300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -17,7 +17,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* [FIXED] เปลี่ยนกลไกซ่อนแผ่นพิมพ์บนหน้าจอ เพื่อให้เบราว์เซอร์คำนวณขนาดกราฟได้อย่างแม่นยำ */
+        /* ระบบจัดเลย์เอาต์หน้ากระดาษพรีวิวจำลองขนาด A4 บนหน้าจอคอมพิวเตอร์ */
         @media screen {
             .print-layout { 
                 position: absolute; 
@@ -126,7 +126,7 @@
             "นครราชสีมา": 4.35, "นครศรีธรรมราช": 3.95, "นครสวรรค์": 4.25, "นนทบุรี": 4.01, "นราธิวาส": 3.78,
             "น่าน": 3.82, "บึงกาฬ": 4.10, "บุรีรัมย์": 4.32, "ปทุมธานี": 4.05, "ประจวบคีรีขันธ์": 4.15,
             "ปราจีนบุรี": 4.08, "ปัตตานี": 3.80, "พระนครศรีอยุธยา": 4.12, "พะเยา": 3.84, "พังงา": 3.88,
-            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุlook": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
+            "พัทลุง": 3.92, "พิจิตร": 4.18, "พิษณุโลก": 4.15, "เพชรบุรี": 4.12, "เพชรบูรณ์": 4.20,
             "แพร่": 3.86, "ภูเก็ต": 3.95, "มหาสารคาม": 4.25, "มุกดาหาร": 4.18, "แม่ฮ่องสอน": 3.75,
             "ยโสธร": 4.28, "ยะลา": 3.78, "ร้อยเอ็ด": 4.26, "ระนอง": 3.70, "ระยอง": 4.10,
             "ราชบุรี": 4.15, "ลพบุรี": 4.22, "ลำปาง": 3.88, "ลำพูน": 3.86, "เลย": 4.05,
@@ -259,10 +259,6 @@
                 }
                 return selected;
             }, [solarSize, systemType, phase]);
-            
-            const isPhaseWarning = useMemo(() => {
-                return phase === "1" && parseFloat(solarSize) > 5.5;
-            }, [phase, solarSize]);
 
             const estInvestment = useMemo(() => {
                 if (!matchedPackage) return 0;
@@ -328,14 +324,14 @@
                             ]
                         },
                         options: {
-                            responsive: true, // [FIXED] ตั้งค่าเป็น true ทั้งสองฝั่งเพื่อให้กราฟยืดตัวตามขนาดกล่องของตัวเองได้อิสระ
+                            responsive: true,
                             maintainAspectRatio: false,
                             layout: {
                                 padding: {
                                     right: isPrintSize ? 30 : 10,
                                     left: 10,
-                                    top: 5,
-                                    bottom: 5
+                                    top: isPrintSize ? 15 : 5,
+                                    bottom: isPrintSize ? 10 : 5
                                 }
                             },
                             plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
@@ -344,8 +340,8 @@
                                 x: { 
                                     ticks: { 
                                         font: { family: 'Sarabun', size: isPrintSize ? 7.5 : 9 },
-                                        autoSkip: false, // [FIXED] บังคับให้แกน X แสดงผลครบปีที่ 1 ถึง 25 ห้ามระบบสุ่มซ่อนตัวหนังสือ
-                                        maxRotation: isPrintSize ? 45 : 0, // [FIXED] ถ้าเป็นเล่มกระดาษพิมพ์ให้เอียง 45 องศาเพื่อไม่ให้ตัวหนังสือเบียดชนกัน
+                                        autoSkip: false, 
+                                        maxRotation: isPrintSize ? 45 : 0, 
                                         minRotation: isPrintSize ? 45 : 0
                                     },
                                     grid: { display: false }
@@ -612,7 +608,7 @@
                                 </div>
 
                                 <div className="pt-8 border-t border-slate-100">
-                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation </h3>
+                                    <h3 className="text-xl font-black text-slate-800 mb-6 text-center uppercase tracking-widest">⭐ Financial Return Simulation (หน้าแรกคอมพิวเตอร์)</h3>
                                     <div className="h-64 w-full relative">
                                         <canvas ref={canvasRef1}></canvas>
                                     </div>
@@ -663,7 +659,7 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout): ล็อกความแม่นยำสูง ยึดเต็มบล็อก 80mm
+                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout)
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
@@ -730,10 +726,9 @@
                                     </div>
                                 </div>
 
-                                {/* [FIXED] อัปเดต Wrapper ล็อกสัดส่วนมิลลิเมตรสัมพันธ์กับแนวราบ 100% สกัดอาการปีแกน X หายขาด */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-1">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
-                                    <div style={{ height: '65mm', width: '100%', position: 'relative' }} className="mx-auto">
+                                    <div style={{ height: '62mm', width: '100%', position: 'relative' }} className="mx-auto">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
                                 </div>
