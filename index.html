@@ -149,6 +149,11 @@
             const [isRegistered, setIsRegistered] = useState(false);
             const [showModal, setShowModal] = useState(true);
             const [formData, setFormData] = useState({ name: '', tel: '' });
+            const [address, setAddress] = useState("");
+
+            // ✏️ หยอดชุดคำสั่ง State เปิด-ปิด และบันทึกราคาแบบแมนนวลอิสระก้อนเดียวจบตามใบเสนอราคาจริง
+            const [isManualPrice, setIsManualPrice] = useState(false);
+            const [manualPriceInput, setManualPriceInput] = useState("");
 
             const [ac1Qty, setAc1Qty] = useState(0);
             const [ac1Hrs, setAc1Hrs] = useState(0);
@@ -259,10 +264,14 @@
                 return phase === "1" && parseFloat(solarSize) > 5.5;
             }, [phase, solarSize]);
 
+            // 🎯 ปรับโครงสร้างวิเคราะห์จุดลงทุน: หากดีลเลอร์ติ๊กแมนนวล ให้ดึงค่ายอดสุทธิไปคำนวณกราฟและ Cash Flow ทันที
             const estInvestment = useMemo(() => {
+                if (isManualPrice) {
+                    return parseFloat(manualPriceInput) || 0;
+                }
                 if (!matchedPackage) return 0;
                 return matchedPackage.price + estBatteryCost;
-            }, [matchedPackage, estBatteryCost]);
+            }, [isManualPrice, manualPriceInput, matchedPackage, estBatteryCost]);
 
             const estSaving = useMemo(() => {
                 if (!matchedPackage) return 0;
@@ -283,7 +292,7 @@
             }, [matchedPackage, sunHours, dayUsage, eveningUsage, bill, systemType, selectedBatteryCapStr, rates.day, rates.evening, rates.avg]);
 
             const cashFlowData = useMemo(() => {
-                const years = Array.from({length: 25}, (_, i) => i + i*0); // ปลอดภัย 25 ปีสม่ำเสมอ
+                const years = Array.from({length: 25}, (_, i) => i + i*0); 
                 let cumulative = 0;
                 return years.map((_, i) => {
                     const year = i + 1;
@@ -366,14 +375,13 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ หน้าแรกบนจอคอมพิวเตอร์ (Screen UI 5.9.3 ตัวเดิมครบถ้วน 100%) */}
+                    {/* ⚙️ ส่วนโครงหน้าจอหลักคอมพิวเตอร์ (Screen UI ตัวเดิมครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                {/* โลโก้จริงของบริษัท บนหน้าต่างควบคุมหน้าจอเว็บคอมพิวเตอร์ */}
                                 <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-8 w-auto rounded-lg object-contain bg-white p-0.5 shadow-sm" alt="TYE Solar Logo" />
                                 <h1 className="text-sm md:text-lg font-bold tracking-tighter flex flex-col md:flex-row md:items-center gap-1">
-                                    <span>⭐ TYE SOLARMASTER</span>
+                                    <span>⭐ TYE SOLARMASTER V6.7.8</span>
                                     <span className="text-slate-400 font-normal hidden md:inline">|</span>
                                     <span className="text-xs md:text-sm text-slate-300">บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด</span>
                                 </h1>
@@ -474,7 +482,7 @@
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-xs font-bold">
-                                                <span>🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.) <span className="ml-1 text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">เรท {rates.night} บ./หน่วย</span></span>
+                                                <span>🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.) <span className="ml-1 text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">เรท {rates.day} บ./หน่วย</span></span>
                                                 <span className="text-purple-600 text-lg font-black">{nightUsage}%</span>
                                             </div>
                                             <input type="range" min="0" max="100" value={nightUsage} onChange={(e) => handleNightChange(e.target.value)} className="w-full h-2.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500" />
@@ -565,12 +573,50 @@
                                     )}
                                 </div>
 
+                                {/* ✏️ บล็อกเครื่องมือระบุราคาสุทธิเองก้อนเดียวจบสำหรับทีมเซลล์ (Manual Net Price Overrider) */}
+                                <div className="mb-6 p-5 bg-blue-50/60 border-2 border-blue-100 rounded-[2rem] animate-fade-in">
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="checkbox" 
+                                            id="manualPriceToggle" 
+                                            checked={isManualPrice} 
+                                            onChange={(e) => {
+                                                setIsManualPrice(e.target.checked);
+                                                // ระบบอัจฉริยะ: ดึงค่าคำนวณแพ็กเกจฐาน ณ ตอนนั้นมาใส่ในกล่องให้อัตโนมัติทันทีเพื่อความสะดวก
+                                                if (e.target.checked && !manualPriceInput && matchedPackage) {
+                                                    const basePrice = matchedPackage.price + (systemType === "hybrid" ? currentBatteryItem.price : 0);
+                                                    setManualPriceInput(basePrice.toString());
+                                                }
+                                            }} 
+                                            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer" 
+                                        />
+                                        <label htmlFor="manualPriceToggle" className="text-sm font-black text-blue-900 cursor-pointer select-none">
+                                            ✏️ ต้องการระบุยอดเงินลงทุนรวมสุทธิเอง (Manual Net Price Override)
+                                        </label>
+                                    </div>
+                                    {isManualPrice && (
+                                        <div className="space-y-1 mt-3">
+                                            <label className="text-xs font-bold text-slate-600 block ml-1">ระบุยอดราคาจบงานรวมภาษีมูลค่าเพิ่มเรียบร้อย (บาท):</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="number" 
+                                                    value={manualPriceInput} 
+                                                    onChange={(e) => setManualPriceInput(e.target.value)} 
+                                                    className="w-full p-3.5 bg-white border-2 border-blue-200 rounded-2xl focus:border-blue-600 outline-none font-black text-xl text-blue-950" 
+                                                    placeholder="พิมพ์ยอดเงินรวมสุทธิบรรทัดเดียวจบ" 
+                                                />
+                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">บาท</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {matchedPackage && (
                                     <div className="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-slate-200 shadow-md text-slate-900 font-sans">
                                         <p className="text-xs font-black text-blue-800 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">📦 แพ็กเกจแนะนำหลัก (COMMERCIAL SOLAR PACKAGE)</p>
                                         <div className="space-y-3 text-sm font-semibold">
                                             <div className="flex justify-between items-center text-slate-800">
-                                                <span>1. {matchedPackage.name} (ราคาฐานแผง + อินเวอร์เตอร์หลัก):</span>
+                                                <span>1. {matchedPackage.name} (ราคาฐานระบบแผงหลัก + อินเวอร์เตอร์หลัก):</span>
                                                 <span className="font-black text-slate-950 text-base">{Number(matchedPackage.price).toLocaleString()} บาท</span>
                                             </div>
                                             <div className="text-[11px] text-slate-400 pl-4 font-normal">* อุปกรณ์: แผง JA Solar จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.</div>
@@ -582,7 +628,9 @@
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
                                                 <span>💰 เงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT):</span>
-                                                <span className="text-emerald-600 text-3xl tracking-tight">{Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span></span>
+                                                <span className="text-emerald-600 text-3xl tracking-tight">
+                                                    {Number(estInvestment).toLocaleString()} <span className="text-xs text-slate-500 font-bold">บาท</span>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -659,7 +707,7 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout)
+                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout จัดเลย์เอาต์ V6.7.8 คมชัดคงเดิม)
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
@@ -667,13 +715,10 @@
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-4 mb-5 shadow-sm text-center">
-                                    
-                                    {/* Бล็อกหัวบริษัทและโลโก้ */}
                                     <div className="flex flex-col items-center justify-center mb-1">
                                         <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-11 w-auto object-contain mix-blend-multiply" alt="TYE Solar Business Logo" />
                                         <span className="text-[9px] font-black text-slate-800 tracking-widest uppercase mt-1">TYE SOLARMASTER TECHNICAL FINANCING</span>
                                     </div>
-
                                     <h2 className="text-base font-black text-slate-900 tracking-tight">รายงานวิเคราะห์ผลประโยชน์การลงทุนระบบพลังงานแสงอาทิตย์</h2>
                                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-0.5">TECHNICAL FINANCING INVESTMENT PROPOSAL — OFFICIAL DOCUMENT</p>
                                 </div>
@@ -724,12 +769,13 @@
                                         )}
                                         <div className="border-t border-dashed border-slate-300 pt-2.5 flex justify-between items-baseline text-slate-900 font-black">
                                             <span className="text-xs">💰 มูลค่ารวมเงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT เรียบร้อย):</span>
-                                            <span className="text-emerald-600 text-lg tracking-tight">{Number(estInvestment).toLocaleString()} บาท</span>
+                                            <span className="text-emerald-600 text-lg tracking-tight">
+                                                {Number(estInvestment).toLocaleString()} บาท {isManualPrice && <span className="text-[10px] text-blue-700 font-bold">(Manual Override)</span>}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* กล่องแสดงผลกราฟแผ่นพิมพ์ หดลงเหลือ h-[62mm] เพื่อความสมดุลลงตัวกรอบขาว 100% */}
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
                                     <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
                                     <div className="h-[62mm] w-[172mm] mx-auto relative">
@@ -748,12 +794,10 @@
                         <div className="a4-sheet flex flex-col justify-between">
                             <div>
                                 <div className="bg-orange-100 border border-orange-200 rounded-2xl p-3 mb-4 shadow-sm text-center">
-                                    
                                     <div className="flex items-center justify-center gap-2 mb-1">
                                         <img src="https://img1.pic.in.th/images/TYE-Solar.jpg" referrerPolicy="no-referrer" className="h-7 w-auto object-contain mix-blend-multiply" alt="TYE Solar Mini Logo" />
                                         <span className="text-[10px] font-extrabold text-slate-900 tracking-widest uppercase">TYE SOLAR LIFETIME REPORT</span>
                                     </div>
-
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
 
