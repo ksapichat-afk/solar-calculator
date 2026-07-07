@@ -151,7 +151,7 @@
             const [formData, setFormData] = useState({ name: '', tel: '' });
             const [address, setAddress] = useState("");
 
-            // ✏️ หยอดชุดคำสั่ง State เปิด-ปิด และบันทึกราคาแบบแมนนวลอิสระก้อนเดียวจบตามใบเสนอราคาจริง
+            // ✏️ State สำหรับควบคุมสวิตช์ปลดล็อกคีย์ราคาสุทธิเองตามสัญญาจ้างพิเศษ
             const [isManualPrice, setIsManualPrice] = useState(false);
             const [manualPriceInput, setManualPriceInput] = useState("");
 
@@ -264,7 +264,7 @@
                 return phase === "1" && parseFloat(solarSize) > 5.5;
             }, [phase, solarSize]);
 
-            // 🎯 ปรับโครงสร้างวิเคราะห์จุดลงทุน: หากดีลเลอร์ติ๊กแมนนวล ให้ดึงค่ายอดสุทธิไปคำนวณกราฟและ Cash Flow ทันที
+            // 🎯 ตรรกะประมวลผลดักจับราคาสุทธิ: หากเซลล์เลือก Overwrite ราคาเอง ให้ส่งค่าใหม่ไปผูกกับกราฟและระบบ Cash Flow ทันที
             const estInvestment = useMemo(() => {
                 if (isManualPrice) {
                     return parseFloat(manualPriceInput) || 0;
@@ -336,24 +336,12 @@
                             responsive: true,
                             maintainAspectRatio: false,
                             layout: {
-                                padding: {
-                                    right: isPrintSize ? 35 : 10,
-                                    left: 10,
-                                    top: isPrintSize ? 15 : 5,
-                                    bottom: isPrintSize ? 15 : 5
-                                }
+                                padding: { right: isPrintSize ? 35 : 10, left: 10, top: isPrintSize ? 15 : 5, bottom: isPrintSize ? 15 : 5 }
                             },
                             plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 10 } } } },
                             scales: {
                                 y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: isPrintSize ? 8 : 9 }, callback: (v) => v.toLocaleString() + ' บ.' } },
-                                x: { 
-                                    ticks: { 
-                                        font: { family: 'Sarabun', size: isPrintSize ? 7.5 : 9 },
-                                        autoSkip: false,
-                                        maxRotation: isPrintSize ? 45 : 0,
-                                        minRotation: isPrintSize ? 45 : 0
-                                    } 
-                                }
+                                x: { ticks: { font: { family: 'Sarabun', size: isPrintSize ? 7.5 : 9 }, autoSkip: false, maxRotation: isPrintSize ? 45 : 0, minRotation: isPrintSize ? 45 : 0 } }
                             }
                         }
                     });
@@ -375,7 +363,7 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ ส่วนโครงหน้าจอหลักคอมพิวเตอร์ (Screen UI ตัวเดิมครบถ้วน 100%) */}
+                    {/* ⚙️ ส่วนควบคุมจอคอมพิวเตอร์ (Screen UI ตัวเดิมครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
@@ -482,7 +470,7 @@
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-xs font-bold">
-                                                <span>🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.) <span className="ml-1 text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">เรท {rates.day} บ./หน่วย</span></span>
+                                                <span>🌙 ช่วงดึก-เช้า (22:00 - 08:00 น.) <span className="ml-1 text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">เรท {rates.night} บ./หน่วย</span></span>
                                                 <span className="text-purple-600 text-lg font-black">{nightUsage}%</span>
                                             </div>
                                             <input type="range" min="0" max="100" value={nightUsage} onChange={(e) => handleNightChange(e.target.value)} className="w-full h-2.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500" />
@@ -573,7 +561,7 @@
                                     )}
                                 </div>
 
-                                {/* ✏️ บล็อกเครื่องมือระบุราคาสุทธิเองก้อนเดียวจบสำหรับทีมเซลล์ (Manual Net Price Overrider) */}
+                                {/* ✏️ บล็อกกล่องกรอกราคาอิสระ ยอดสุทธิบรรทัดเดียวสำหรับทีมเซลล์ */}
                                 <div className="mb-6 p-5 bg-blue-50/60 border-2 border-blue-100 rounded-[2rem] animate-fade-in">
                                     <div className="flex items-center gap-2">
                                         <input 
@@ -582,7 +570,6 @@
                                             checked={isManualPrice} 
                                             onChange={(e) => {
                                                 setIsManualPrice(e.target.checked);
-                                                // ระบบอัจฉริยะ: ดึงค่าคำนวณแพ็กเกจฐาน ณ ตอนนั้นมาใส่ในกล่องให้อัตโนมัติทันทีเพื่อความสะดวก
                                                 if (e.target.checked && !manualPriceInput && matchedPackage) {
                                                     const basePrice = matchedPackage.price + (systemType === "hybrid" ? currentBatteryItem.price : 0);
                                                     setManualPriceInput(basePrice.toString());
@@ -616,14 +603,16 @@
                                         <p className="text-xs font-black text-blue-800 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">📦 แพ็กเกจแนะนำหลัก (COMMERCIAL SOLAR PACKAGE)</p>
                                         <div className="space-y-3 text-sm font-semibold">
                                             <div className="flex justify-between items-center text-slate-800">
-                                                <span>1. {matchedPackage.name} (ราคาฐานระบบแผงหลัก + อินเวอร์เตอร์หลัก):</span>
-                                                <span className="font-black text-slate-950 text-base">{Number(matchedPackage.price).toLocaleString()} บาท</span>
+                                                <span>1. {matchedPackage.name} (โครงสร้างระบบแผงหลัก + อินเวอร์เตอร์หลัก):</span>
+                                                {/* 💡 ไอเดียที่ 1 ล็อกเงื่อนไข: หากใช้ราคาแมนนวล จะซ่อนตัวเลขสัดส่วนปลีกทันที */}
+                                                {!isManualPrice && <span className="font-black text-slate-950 text-base">{Number(matchedPackage.price).toLocaleString()} บาท</span>}
                                             </div>
                                             <div className="text-[11px] text-slate-400 pl-4 font-normal">* อุปกรณ์: แผง JA Solar จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.</div>
                                             {systemType === "hybrid" && (
                                                 <div className="flex justify-between items-center text-blue-800 pt-1">
                                                     <span>2. แบตเตอรี่แอดออน {batteryBrand} [{selectedBatteryCapStr}]:</span>
-                                                    <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บาท</span>
+                                                    {/* 💡 ไอเดียที่ 1 ล็อกเงื่อนไข: หากใช้ราคาแมนนวล จะซ่อนตัวเลขสัดส่วนปลีกทันที */}
+                                                    {!isManualPrice && <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บาท</span>}
                                                 </div>
                                             )}
                                             <div className="border-t border-dashed border-slate-300 pt-4 flex justify-between items-baseline font-black">
@@ -674,7 +663,7 @@
 
                                     <div className="mt-12 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-lg">
                                         <div className="bg-slate-800 p-5 text-white flex justify-between items-center">
-                                            <h4 className="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard (ตารางเต็ม 25 แถวเดิม)</h4>
+                                            <h4 className="font-black text-sm uppercase tracking-widest">⭐ Cash Flow Dashboard</h4>
                                         </div>
                                         <div className="overflow-x-auto custom-scrollbar">
                                             <table className="w-full text-left text-sm">
@@ -707,7 +696,7 @@
                     </div>
 
                     {/* ========================================================================
-                        📄 🏢 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout จัดเลย์เอาต์ V6.7.8 คมชัดคงเดิม)
+                        📄 ส่วนเล่มรายงานสำหรับพิมพ์ (Print Layout สัดส่วนไอเดียที่ 1 ซ่อนหน่วยเงินแยกชิ้นกริบ)
                         ======================================================================== */}
                     <div className="print-layout bg-white p-0">
                         
@@ -756,7 +745,8 @@
                                     <div className="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-2 bg-white">
                                         <div className="flex justify-between items-center text-slate-800">
                                             <span>1. {packageNameStr} (ราคาฐานระบบแผงหลัก + อินเวอร์เตอร์เกรดระดับโลก):</span>
-                                            <span className="font-black text-slate-950">{packagePriceStr} บ.</span>
+                                            {/* 💡 หยอดเงื่อนไขล็อกไอเดียที่ 1: แมนนวลปั๊บ ลบค่าแยกส่วนปลีกทันที */}
+                                            {!isManualPrice && <span className="font-black text-slate-950">{packagePriceStr} บ.</span>}
                                         </div>
                                         <div className="text-[10px] text-slate-400 font-normal pl-3 leading-relaxed text-slate-500">
                                             * โครงสร้างอุปกรณ์: แผงพลังงานพรีเมียม JA Solar (Tier-1) จำนวน {packagePanelsStr} แผง | ใช้พื้นที่ติดตั้งหลังคาประมาณ {packageAreaStr} ตารางเมตร
@@ -764,7 +754,8 @@
                                         {systemType === "hybrid" && (
                                             <div className="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-1.5 font-bold">
                                                 <span>2. แบตเตอรี่แอดออนเสริมความปลอดภัยสำหรับอินเวอร์เตอร์ Hybrid [{selectedBatteryCapStr}]:</span>
-                                                <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บ.</span>
+                                                {/* 💡 หยอดเงื่อนไขล็อกไอเดียที่ 1: แมนนวลปั๊บ ลบค่าแยกส่วนปลีกทันที */}
+                                                {!isManualPrice && <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บ.</span>}
                                             </div>
                                         )}
                                         <div className="border-t border-dashed border-slate-300 pt-2.5 flex justify-between items-baseline text-slate-900 font-black">
