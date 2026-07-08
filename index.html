@@ -55,9 +55,11 @@
                     { name: "On-Grid Solis 10kW 3P", maxSize: 10.5, kwpSize: 9.9, price: 239000, panels: 18, area: 54 },
                     { name: "On-Grid Solis 20kW 3P", maxSize: 25.0, kwpSize: 15.4, price: 409000, panels: 28, area: 84 },
                     { name: "On-Grid Solis 30kW 3P", maxSize: 35.0, kwpSize: 23.1, price: 549000, panels: 42, area: 126 },
-                    // ➕ ขยายแพ็กเกจเพิ่มสเกล 40kW, 50kW, 100kW เข้าสู่ดาต้าเบสหลัก V6.7.8 เรียบร้อยเรียงลำดับถูกหลักวิศวกรรม
-                    { name: "On-Grid Huawei 40kW 3P (Jinko 650W x 70 แผง)", maxSize: 48.0, kwpSize: 45.50, price: 1033630, panels: 70, area: 154 },
+                    // ➕ ขนาดที่ 1 ที่เพิ่มใหม่ (Huawei 40kW ของคุณพิเชษฐ์)
+                    { name: "On-Grid Huawei 40kW 3P", maxSize: 48.0, kwpSize: 45.50, price: 1033630, panels: 70, area: 154 },
+                    // ➕ ขนาดที่ 2 ที่เพิ่มใหม่ (ตัวอย่างขนาด 50kW)
                     { name: "On-Grid Commercial 50kW 3P", maxSize: 65.0, kwpSize: 52.00, price: 1200000, panels: 80, area: 180 },
+                     // ➕ ขนาดที่ 3 ที่เพิ่มใหม่ (ตัวอย่างขนาด 100kW ล็อกให้เป็นปลายทางสูงสุด)
                     { name: "On-Grid Commercial 100kW 3P", maxSize: 999.0, kwpSize: 104.00, price: 2200000, panels: 160, area: 360 }
                 ]
             },
@@ -117,7 +119,6 @@
             ]
         };
 
-        // 📦 คืนฐานข้อมูลพิกัดแดดรายจังหวัดของเดิมครบถ้วน 77 จังหวัด ป้องกันเว็บขาวชัวร์ 100%
         const PROVINCE_SUN_HOURS = {
             "กรุงเทพมหานคร": 4.01, "กระบี่": 3.92, "กาญจนบุรี": 4.25, "กาฬสินธุ์": 4.30, "กำแพงเพชร": 4.18,
             "ขอนแก่น": 4.22, "จันทบุรี": 3.85, "ฉะเชิงเทรา": 4.05, "ชลบุรี": 4.12, "ชัยนาท": 4.20,
@@ -138,29 +139,27 @@
         };
 
         const App = () => {
-            // ล็อกพารามิเตอร์เริ่มต้นให้จับคู่แพ็กเกจ 40kW (45.5 kWp) ของคุณพิเชษฐ์ อัตโนมัติทันที
-            const [bill, setBill] = useState(31000); 
-            const [province, setProvince] = useState("ระยอง");
-            const [tariffType, setTariffType] = useState("tou"); 
-            const [tariffCategory, setTariffCategory] = useState("factory_3224"); // State สำหรับระบุเรทไฟโรงงานอุตสาหกรรม
-            const [systemType, setSystemType] = useState("ongrid"); 
+            const [bill, setBill] = useState(5000);
+            const [province, setProvince] = useState("กรุงเทพมหานคร");
+            const [tariffType, setTariffType] = useState("normal"); 
+            const [systemType, setSystemType] = useState("hybrid"); 
             
-            const [dayUsage, setDayUsage] = useState(85);      
-            const [eveningUsage, setEveningUsage] = useState(10);  
-            const [nightUsage, setNightUsage] = useState(5);    
+            const [dayUsage, setDayUsage] = useState(50);      
+            const [eveningUsage, setEveningUsage] = useState(30);  
+            const [nightUsage, setNightUsage] = useState(20);    
 
-            const [phase, setPhase] = useState("3");
+            const [phase, setPhase] = useState("1");
             const [batteryBrand, setBatteryBrand] = useState("Deye (ประกัน 10ปี)");
             const [batteryIndex, setBatteryIndex] = useState(0);
 
-            const [isRegistered, setIsRegistered] = useState(true);
-            const [showModal, setShowModal] = useState(false);
-            const [formData, setFormData] = useState({ name: 'คุณพิเชษฐ์', tel: '0623599615' });
-            const [address, setAddress] = useState("โรงงานอุตสาหกรรม (อัตราค่าไฟฟ้าประเภท TOU รหัสสายส่ง 3224)");
+            const [isRegistered, setIsRegistered] = useState(false);
+            const [showModal, setShowModal] = useState(true);
+            const [formData, setFormData] = useState({ name: '', tel: '' });
+            const [address, setAddress] = useState("");
 
-            // ✏️ เปิดสวิตช์ป้อนราคาสุทธิเองก้อนเดียวจบตามใบเสนอราคาจริง (ล็อกยอดตรงสัญญา 1,033,630 บาท)
-            const [isManualPrice, setIsManualPrice] = useState(true);
-            const [manualPriceInput, setManualPriceInput] = useState("1033630");
+            // ✏️ State สำหรับควบคุมสวิตช์ปลดล็อกคีย์ราคาสุทธิเองตามสัญญาจ้างพิเศษ
+            const [isManualPrice, setIsManualPrice] = useState(false);
+            const [manualPriceInput, setManualPriceInput] = useState("");
 
             const [ac1Qty, setAc1Qty] = useState(0);
             const [ac1Hrs, setAc1Hrs] = useState(0);
@@ -178,17 +177,15 @@
             const chart1 = useRef(null);
             const chart2 = useRef(null);
 
-            const sunHours = useMemo(() => PROVINCE_SUN_HOURS[province] || 4.10, [province]);
+            const sunHours = useMemo(() => PROVINCE_SUN_HOURS[province] || 4.0, [province]);
 
-            // 🎯 ปรับตรรกะจูนเรทไฟอัจฉริยะ: หากเลือกโรงงาน 3224 จะสลับเพดานจาก 5.8 บ. ลงมาเหลือ 5.0 บ. เพื่อความถูกต้องแม่นยำร้อยเปอร์เซ็นต์
             const rates = useMemo(() => {
                 if (tariffType === "tou") {
-                    const peakRate = tariffCategory === "factory_3224" ? 5.0 : 5.8;
-                    const avgRate = ((dayUsage * peakRate) + (eveningUsage * peakRate) + (nightUsage * 2.6)) / 100;
-                    return { day: peakRate, evening: peakRate, night: 2.6, avg: avgRate || 4.2 };
+                    const avgRate = ((dayUsage * 5.8) + (eveningUsage * 5.8) + (nightUsage * 2.6)) / 100;
+                    return { day: 5.8, evening: 5.8, night: 2.6, avg: avgRate || 4.2 };
                 }
                 return { day: 4.2, evening: 4.2, night: 4.2, avg: 4.2 };
-            }, [tariffType, tariffCategory, dayUsage, eveningUsage, nightUsage]);
+            }, [tariffType, dayUsage, eveningUsage, nightUsage]);
 
             const eveningTotalWh = useMemo(() => {
                 return (900 * ac1Qty * ac1Hrs) +
@@ -273,6 +270,7 @@
                 return phase === "1" && parseFloat(solarSize) > 5.5;
             }, [phase, solarSize]);
 
+            // 🎯 ตรรกะประมวลผลดักจับราคาสุทธิ: หากเซลล์เลือก Overwrite ราคาเอง ให้ส่งค่าใหม่ไปผูกกับกราฟและระบบ Cash Flow ทันที
             const estInvestment = useMemo(() => {
                 if (isManualPrice) {
                     return parseFloat(manualPriceInput) || 0;
@@ -281,7 +279,6 @@
                 return matchedPackage.price + estBatteryCost;
             }, [isManualPrice, manualPriceInput, matchedPackage, estBatteryCost]);
 
-            // 🎯 แก้ไขตัวแปรให้คืนค่าเป็น Number แท้ ป้องกันตัวเลขเพี้ยนและอาการหน้าจอขาว
             const estSaving = useMemo(() => {
                 if (!matchedPackage) return 0;
                 const currentBill = parseFloat(bill) || 0;
@@ -297,8 +294,8 @@
                     const eveningUnitsPerMonth = totalUnitsPerMonth * (eveningUsage / 100);
                     eveningSavings = Math.min(eveningUnitsPerMonth, maxBatteryOutputPerMonth) * rates.evening;
                 }
-                return Math.round(daySavings + eveningSavings);
-            }, [matchedPackage, sunHours, dayUsage, eveningUsage, bill, systemType, selectedBatteryCapStr, rates]);
+                return (daySavings + eveningSavings).toFixed(0);
+            }, [matchedPackage, sunHours, dayUsage, eveningUsage, bill, systemType, selectedBatteryCapStr, rates.day, rates.evening, rates.avg]);
 
             const cashFlowData = useMemo(() => {
                 const years = Array.from({length: 25}, (_, i) => i + i*0); 
@@ -372,7 +369,7 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* ⚙️ ส่วนควบคุมหน้าจอหลักคอมพิวเตอร์ (Screen UI) */}
+                    {/* ⚙️ ส่วนควบคุมจอคอมพิวเตอร์ (Screen UI ตัวเดิมครบถ้วน 100%) */}
                     <div className="screen-layout no-print">
                         <header className="bg-slate-900 p-4 md:p-5 text-white shadow-xl flex justify-between items-center">
                             <div className="flex items-center gap-3">
@@ -446,18 +443,6 @@
                                             </button>
                                         </div>
                                     </div>
-
-                                    {/* 🏭 บล็อกดึงสลับเรทราคาไฟให้เป็นของสเกลอุตสาหกรรม (ประเภท 3224) */}
-                                    {tariffType === "tou" && (
-                                        <div className="md:col-span-2 space-y-1 animate-fade-in bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                                            <label className="font-bold text-orange-950 text-sm ml-1">🏭 จำแนกกลุ่มโครงสร้างอัตราค่าไฟ TOU:</label>
-                                            <select value={tariffCategory} onChange={(e) => setTariffCategory(e.target.value)}
-                                                className="w-full p-4 bg-white border-2 border-orange-200 rounded-2xl focus:border-orange-500 outline-none font-bold text-base text-orange-900 cursor-pointer">
-                                                <option value="residential">บ้านอยู่อาศัย / กิจการขนาดเล็ก (On-Peak ~5.8 บ.)</option>
-                                                <option value="factory_3224">โรงงาน / กิจการขนาดกลาง รหัสสัญญา 3224 (On-Peak ~5.0 บ.)</option>
-                                            </select>
-                                        </div>
-                                    )}
 
                                     <div className="md:col-span-2 space-y-2 mt-2">
                                         <label className="font-bold text-slate-700 text-sm ml-1">5. ระบบไฟฟ้าที่ใช้งานหน้างาน:</label>
@@ -582,6 +567,7 @@
                                     )}
                                 </div>
 
+                                {/* ✏️ บล็อกกล่องกรอกราคาอิสระ ยอดสุทธิบรรทัดเดียวสำหรับทีมเซลล์ */}
                                 <div className="mb-6 p-5 bg-blue-50/60 border-2 border-blue-100 rounded-[2rem] animate-fade-in">
                                     <div className="flex items-center gap-2">
                                         <input 
@@ -627,10 +613,11 @@
                                                 {/* 💡 ไอเดียที่ 1 ล็อกเงื่อนไข: หากใช้ราคาแมนนวล จะซ่อนตัวเลขสัดส่วนปลีกทันที */}
                                                 {!isManualPrice && <span className="font-black text-slate-950 text-base">{Number(matchedPackage.price).toLocaleString()} บาท</span>}
                                             </div>
-                                            <div className="text-[11px] text-slate-400 pl-4 font-normal">* อุปกรณ์: แผงพลังงานพรีเมียม จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.</div>
+                                            <div className="text-[11px] text-slate-400 pl-4 font-normal">* อุปกรณ์: แผง JA Solar จำนวน {matchedPackage.panels} แผง | พื้นที่ติดตั้งประมาณ {matchedPackage.area} ตร.ม.</div>
                                             {systemType === "hybrid" && (
                                                 <div className="flex justify-between items-center text-blue-800 pt-1">
                                                     <span>2. แบตเตอรี่แอดออน {batteryBrand} [{selectedBatteryCapStr}]:</span>
+                                                    {/* 💡 ไอเดียที่ 1 ล็อกเงื่อนไข: หากใช้ราคาแมนนวล จะซ่อนตัวเลขสัดส่วนปลีกทันที */}
                                                     {!isManualPrice && <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บาท</span>}
                                                 </div>
                                             )}
@@ -741,7 +728,7 @@
                                         <div>ประเภทสถาปัตยกรรมระบบ: <span className="text-slate-950 font-black uppercase">{systemType} System</span></div>
                                         <div>สัดส่วนพฤติกรรมการใช้ไฟ: <span className="text-slate-950 font-black">กลางวัน {dayUsage}% / ค่ำ {eveningUsage}% / ดึก {nightUsage}%</span></div>
                                         <div>ระบบไฟฟ้าอาคารหน้างาน: <span className="text-slate-950 font-black">{phase === "1" ? "ระบบไฟ 1 เฟส (1 Phase)" : "ระบบไฟ 3 เฟส (3 Phase)"}</span></div>
-                                        <div>อัตราการคิดค่าไฟฟ้าเดิม: <span className="text-slate-950 font-black">{tariffType === "tou" ? `อัตราไฟฟ้า TOU (${tariffCategory === "factory_3224" ? "รหัสโรงงาน 3224" : "ทั่วไป"})` : "อัตราไฟฟ้าปกติ"}</span></div>
+                                        <div>อัตราการคิดค่าไฟฟ้าเดิม: <span className="text-slate-950 font-black">{tariffType === "tou" ? "อัตราไฟฟ้า TOU (On/Off-Peak)" : "อัตราไฟฟ้าปกติ (Flat Rate)"}</span></div>
                                     </div>
                                 </div>
 
@@ -753,7 +740,7 @@
                                             <p className="text-[9px] text-slate-400 font-medium mt-0.5">*คำนวณประมวลผลสอดคล้องตรงตามสถิติความเข้มแสงอาทิตย์จริงในเขตจังหวัด {province}</p>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-xl font-black text-slate-900">{matchedPackage ? matchedPackage.kwpSize : solarSize}</span>
+                                            <span className="text-xl font-black text-slate-900">{solarSize}</span>
                                             <span className="text-xs font-bold text-slate-500 ml-1">kWp</span>
                                         </div>
                                     </div>
@@ -763,21 +750,22 @@
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-slate-800 pl-2">3. ชุดรายละเอียดแพ็กเกจราคาและงบเงินลงทุนรวม (Investment Packages)</h3>
                                     <div className="border border-slate-200 rounded-xl p-4 text-xs font-bold space-y-2 bg-white">
                                         <div className="flex justify-between items-center text-slate-800">
-                                            <span>1. {packageNameStr} (ราคาโครงสร้างแผง + อินเวอร์เตอร์เกรดระดับโลก):</span>
-                                            {/* 💡 หยอดเงื่อนไขล็อกไอเดียที่ 1: แมนนวลปั๊บ ลบค่าแยกส่วนปลีกทันทีเพื่อกันคำถามยิบย่อย */}
+                                            <span>1. {packageNameStr} (ราคาฐานระบบแผงหลัก + อินเวอร์เตอร์เกรดระดับโลก):</span>
+                                            {/* 💡 หยอดเงื่อนไขล็อกไอเดียที่ 1: แมนนวลปั๊บ ลบค่าแยกส่วนปลีกทันที */}
                                             {!isManualPrice && <span className="font-black text-slate-950">{packagePriceStr} บ.</span>}
                                         </div>
                                         <div className="text-[10px] text-slate-400 font-normal pl-3 leading-relaxed text-slate-500">
-                                            * รายละเอียดชุดอุปกรณ์: แผงพลังงานพรีเมียม จำนวน {packagePanelsStr} แผง | ใช้พื้นที่ติดตั้งหลังคาประมาณ {packageAreaStr} ตารางเมตร
+                                            * โครงสร้างอุปกรณ์: แผงพลังงานพรีเมียม JA Solar (Tier-1) จำนวน {packagePanelsStr} แผง | ใช้พื้นที่ติดตั้งหลังคาประมาณ {packageAreaStr} ตารางเมตร
                                         </div>
                                         {systemType === "hybrid" && (
                                             <div className="flex justify-between items-center text-blue-800 border-t border-slate-100 pt-1.5 font-bold">
-                                                <span>2. ระบบกักเก็บพลังงานแบตเตอรี่แอดออน [{selectedBatteryCapStr}]:</span>
+                                                <span>2. แบตเตอรี่แอดออนเสริมความปลอดภัยสำหรับอินเวอร์เตอร์ Hybrid [{selectedBatteryCapStr}]:</span>
+                                                {/* 💡 หยอดเงื่อนไขล็อกไอเดียที่ 1: แมนนวลปั๊บ ลบค่าแยกส่วนปลีกทันที */}
                                                 {!isManualPrice && <span className="font-black">+{Number(estBatteryCost).toLocaleString()} บ.</span>}
                                             </div>
                                         )}
                                         <div className="border-t border-dashed border-slate-300 pt-2.5 flex justify-between items-baseline text-slate-900 font-black">
-                                            <span className="text-xs">💰 มูลค่ารวมเงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT เรียบร้อยแล้ว):</span>
+                                            <span className="text-xs">💰 มูลค่ารวมเงินลงทุนรวมสุทธิทั้งโครงการ (รวม VAT เรียบร้อย):</span>
                                             <span className="text-emerald-600 text-lg tracking-tight">
                                                 {Number(estInvestment).toLocaleString()} บาท {isManualPrice && <span className="text-[10px] text-blue-700 font-bold">(Manual Override)</span>}
                                             </span>
@@ -786,7 +774,7 @@
                                 </div>
 
                                 <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm">
-                                    <p className="text-[9px] font-black text-slate-600 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
+                                    <p className="text-[9px] font-black text-slate-700 text-center mb-0.5">แผนภูมิประเมินผลประหยัดสะสมรายปีต่อเนื่อง เคียงคู่เส้นอัตราทุนโครงการ 25 ปี</p>
                                     <div className="h-[62mm] w-[172mm] mx-auto relative">
                                         <canvas ref={canvasRef2}></canvas>
                                     </div>
@@ -794,7 +782,8 @@
                             </div>
                             
                             <div className="text-center border-t border-slate-200 pt-2 text-[10px] font-black text-slate-500 tracking-wide">
-                                บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด | หน้า 1
+                                บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด
+                                <p className="text-[8px] text-slate-400 font-normal mt-0.5">หน้า 1 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</p>
                             </div>
                         </div>
 
@@ -809,13 +798,13 @@
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-widest">📈 ตารางแจงบัญชีกระแสเงินสดสะสมและจุดคุ้มทุนรายปีโครงการ (Lifetime Cash Flow Report)</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 mb-4 text-center text-xs font-black">
-                                    <div className="p-2.5 bg-slate-50 rounded-xl border">
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนโครงการ (Payback Period)</p>
-                                        <p className="text-orange-600 text-base font-black">{paybackPeriodStr} ปี</p>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center font-bold">
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">ระยะเวลาคืนทุนโดยประมาณ (Payback Period)</p>
+                                        <p className="text-orange-600 text-base font-black">{paybackPeriodStr} <span className="text-xs font-bold text-slate-500">ปี</span></p>
                                     </div>
-                                    <div className="p-2.5 bg-slate-50 rounded-xl border text-center font-bold">
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">...มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
+                                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center font-bold">
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">...มูลค่ารวมผลประหยัดรายปีสะสมสุทธิ 25 ปี</p>
                                         <p className="text-emerald-700 text-base font-black">{netLifetimeProfitStr} บ.</p>
                                     </div>
                                 </div>
@@ -833,7 +822,7 @@
                                         <tbody className="divide-y divide-slate-200 bg-white">
                                             {cashFlowData.map((item) => (
                                                 <tr key={item.year} className="bg-white">
-                                                    <td className="px-3 py-[3px] font-bold">สิ้นปีที่ {item.year}</td>
+                                                    <td className="px-3 py-[3px] font-bold text-slate-900">สิ้นปีที่ {item.year}</td>
                                                     <td className="px-3 py-[3px] text-slate-600">{Math.round(item.yearlySaving).toLocaleString()} บ.</td>
                                                     <td className="px-3 py-[3px] text-slate-600">{Math.round(item.cumulative).toLocaleString()} บ.</td>
                                                     <td className={`px-3 py-[3px] font-black ${item.netProfit >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
@@ -849,15 +838,29 @@
                             <div className="border-t border-slate-200 pt-3 font-sans text-[10px]">
                                 <p className="font-black text-slate-900 uppercase tracking-widest mb-2">🛠️ เจ้าหน้าที่วิศวกรผู้ประสานงานโครงการ (TYE SOLAR PROJECT COORDINATORS)</p>
                                 <div className="grid grid-cols-3 gap-3 text-slate-600 font-bold mb-3">
-                                    <div className="bg-slate-50 p-2 rounded-xl border">ฝ่ายขาย: คุณมยุรา (จอย) โทร: 062-289-2261</div>
-                                    <div className="bg-slate-50 p-2 rounded-xl border">บริการลูกค้า: คุณศุภลักษณ์ (อัฐ) โทร: 092-492-7722</div>
-                                    <div className="bg-slate-50 p-2 rounded-xl border">ฝ่ายวิศวกรรม: คุณโมสต์ โทร: 099-563-6837</div>
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายขายและการตลาด</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณมยุรา (จอย)</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 062-289-2261</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายบริการลูกค้า</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณศุภลักษณ์ (อัฐ)</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 092-492-7722</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                        <p className="font-black text-slate-800">ฝ่ายเทคนิคและวิศวกรรม</p>
+                                        <p className="font-medium text-slate-500 mt-0.5">คุณโมสต์</p>
+                                        <p className="text-blue-900 font-extrabold">โทร: 099-563-6837</p>
+                                    </div>
                                 </div>
-                                <div className="text-center text-[10px] font-black text-slate-400 mt-2">
-                                    บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด | หน้า 2
+                                <div className="text-center text-[10px] font-black text-slate-500 tracking-wide border-t border-slate-100 pt-2">
+                                    บริษัท ธันยธรณ์ เอ็นจิเนียริ่ง แอนด์ ดีเวลลอปเม้นท์ จํากัด
+                                    <p className="text-[8px] text-slate-400 font-normal mt-0.5">หน้า 2 / เล่มข้อเสนอโครงการ TYE SOLARMASTER</p>
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     {showModal && !isRegistered && (
